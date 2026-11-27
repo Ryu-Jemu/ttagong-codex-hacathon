@@ -1,0 +1,43 @@
+digraph ttagong {
+  graph [rankdir=LR, splines=polyline, pad=0.24, nodesep=0.32, ranksep=0.56,
+         bgcolor="@CANVAS@", fontcolor="@INK@"]
+  node [shape=box, style="rounded,filled", margin="0.17,0.12", fontsize=13,
+        color="@BORDER@", fontcolor="@INK@", fillcolor="@SURFACE@"]
+  edge [color="@EDGE@", fontcolor="@INK@", arrowsize=0.75, fontsize=10]
+
+  inputs [label="기본 자료\n합성 이야기와 선곡\n행정경계와 공개 인구 집계",
+          fillcolor="@ACCENT@", color="@ACCENT_BORDER@"]
+
+  subgraph cluster_public {
+    label="공개 시연 · 정적 배포"
+    labeljust=l
+    color="@BORDER@"
+    fontcolor="@INK@"
+    style=rounded
+    margin=14
+    files [label="Vite 정적 빌드\nVercel / npm run preview"]
+    public [label="브라우저 · React\n홈, 이야기, 온기지도, 선곡"]
+    preferences [label="브라우저 저장소\n관심 지역 · LP 디자인"]
+    files -> public [label=" 정적 파일"]
+    public -> preferences
+  }
+
+  subgraph cluster_development {
+    label="로컬 시연 · npm run dev"
+    labeljust=l
+    color="@BORDER@"
+    fontcolor="@INK@"
+    style=rounded
+    margin=14
+    local [label="브라우저 · 작성 폼\n제목·본문 / 곡명·추천 이유"]
+    endpoint [label="Vite 개발 미들웨어\nPOST /api/moderate\n127.0.0.1:5173"]
+    codex [label="로그인된 Codex CLI\n구조화된 판정"]
+    state [label="브라우저 저장소 갱신\n승인 글·선곡, 로컬 활동"]
+    local -> endpoint [dir=both, label=" 심사 요청 / 판정"]
+    endpoint -> codex [dir=both, label=" 텍스트 / 결과"]
+    local -> state [label=" 승인 글 · 로컬 활동"]
+  }
+
+  inputs -> files
+  inputs -> local
+}

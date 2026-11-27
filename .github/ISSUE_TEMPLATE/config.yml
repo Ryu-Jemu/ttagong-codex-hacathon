@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 비공개 취약점 신고
+    url: https://github.com/Ryu-Jemu/ttagong-codex-hacathon/security
+    about: 보안 문제를 유지관리자에게 비공개로 알려 주세요.
