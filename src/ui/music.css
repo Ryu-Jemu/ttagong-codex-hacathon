@@ -178,8 +178,8 @@ html:has(.record-dialog[open]) { overflow: hidden; }
 .record-swatch { inline-size: 15px; aspect-ratio: 1; border: 3px solid var(--vinyl); border-radius: 50%; background: var(--disc-label); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .app-shell:not([data-motion="reduced"]) .music-record { transition: background-color 160ms ease, border-color 160ms ease; }
-  .app-shell:not([data-motion="reduced"]) .record-dialog[open] { animation: story-appear 220ms ease; }
+  .app-shell .music-record { transition: background-color 160ms ease, border-color 160ms ease; }
+  .app-shell .record-dialog[open] { animation: story-appear 220ms ease; }
 }
 
 .music-track-info h2 {

@@ -31,7 +31,7 @@
   line-height: 1.5;
   color: var(--ink);
   background: var(--page);
-  scroll-padding-block: calc(var(--header-height) + env(safe-area-inset-top) + 12px)
+  scroll-padding-block: calc(var(--site-header-height, var(--header-height) + env(safe-area-inset-top)) + 12px)
     calc(var(--nav-height) + env(safe-area-inset-bottom) + 3.5rem);
 }
 
@@ -499,29 +499,6 @@ textarea { resize: vertical; min-height: 128px; }
   font-size: .6875rem;
   font-weight: 750;
 }
-.profile-card { display: flex; align-items: center; gap: 12px; }
-.profile-card .item-icon { width: 47px; height: 47px; font-size: 1.2rem; }
-.motion-setting { max-width: 740px; margin-block: 14px; }
-.motion-switch {
-  display: flex;
-  align-items: center;
-  flex: none;
-  inline-size: 42px;
-  block-size: 24px;
-  padding: 3px;
-  border: 1px solid var(--control-line);
-  border-radius: 999px;
-  background: var(--stone);
-}
-.motion-switch::before {
-  inline-size: 16px;
-  block-size: 16px;
-  border-radius: 50%;
-  background: var(--muted);
-  content: '';
-}
-.motion-setting[aria-checked="true"] .motion-switch { justify-content: flex-end; background: var(--accent); }
-.motion-setting[aria-checked="true"] .motion-switch::before { background: var(--paper); }
 .profile-stories, .reset-panel { margin-block-start: 14px; }
 .reset-panel .button { margin-block-start: 10px; }
 .reset-panel .reset-status:empty { margin: 0; }
@@ -578,14 +555,14 @@ dialog::backdrop { background: rgb(38 34 56 / .53); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .app-shell:not([data-motion="reduced"])::before { animation: drift-upper-glow 16s ease-in-out infinite alternate; }
-  .app-shell:not([data-motion="reduced"])::after { animation: drift-lower-glow 21s ease-in-out infinite alternate; }
-  .app-shell:not([data-motion="reduced"]) :is(.story-card, .item-row) { transition: transform 160ms ease; }
-  .app-shell:not([data-motion="reduced"]) :is(.story-card:has(.story-link:active), button.item-row:active) {
+  .app-shell::before { animation: drift-upper-glow 16s ease-in-out infinite alternate; }
+  .app-shell::after { animation: drift-lower-glow 21s ease-in-out infinite alternate; }
+  .app-shell :is(.story-card, .item-row) { transition: transform 160ms ease; }
+  .app-shell :is(.story-card:has(.story-link:active), button.item-row:active) {
     transform: scale(.978);
   }
-  .app-shell:not([data-motion="reduced"]) .boundary-area[data-updated="true"] .boundary-outline { animation: boundary-highlight 650ms ease-out; }
-  .app-shell:not([data-motion="reduced"]) .review-message { animation: reveal-status 180ms ease-out; }
+  .app-shell .boundary-area[data-updated="true"] .boundary-outline { animation: boundary-highlight 650ms ease-out; }
+  .app-shell .review-message { animation: reveal-status 180ms ease-out; }
 }
 @keyframes drift-upper-glow {
   from { transform: translate3d(-24px, -12px, 0) rotate(-8deg) scale(.86); }

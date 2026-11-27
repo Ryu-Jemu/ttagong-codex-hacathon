@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { makeDemoState, DEMO_AUTHOR } from './fixtures.ts';
 import { parseModerationResult, validModerationText } from './moderation.ts';
+import { getWarmth, regions } from '../regions/index.ts';
 
 test('only recognized decision and reason pairs can approve a story', () => {
   const allowed = { decision: 'APPROVED', reasonCode: 'WARM_STORY' };
@@ -32,9 +33,13 @@ test('the story requires nonblank title and body within the form bounds', () => 
 
 test('Seoul has three recent fixture authors distinct from the local demo author', () => {
   const now = Date.parse('2026-11-27T05:00:00Z');
-  const seoul = makeDemoState(now).posts.filter((post) => post.regionId === '1100000000');
-  assert.equal(new Set(seoul.map((post) => post.authorId)).size, 3);
-  for (const post of seoul) {
+  const region = regions.find(({ id }) => id === '1100000000');
+  assert.ok(region);
+  const seoul = makeDemoState(now).posts.filter((post) => post.regionId === region.id);
+  const recent = seoul.filter((post) => now - Date.parse(post.createdAt) < 3 * 86_400_000);
+  assert.equal(new Set(recent.map((post) => post.authorId)).size, 3);
+  assert.equal(getWarmth(seoul, region, new Date(now)).points, 3);
+  for (const post of recent) {
     assert.notEqual(post.authorId, DEMO_AUTHOR.authorId);
     const age = now - Date.parse(post.createdAt);
     assert.ok(age >= 0 && age < 3 * 86_400_000);

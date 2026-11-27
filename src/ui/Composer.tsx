@@ -11,7 +11,7 @@ const reviewText = {
   APPROVED: ['게시 완료', ''],
   BLOCKED: ['게시 차단', '글을 수정한 뒤 다시 요청해 주세요.'],
   HOLD: ['심사 보류', '이야기의 맥락을 더 적고 다시 요청해 주세요.'],
-  UNAVAILABLE: ['심사 실패', '입력은 그대로 있습니다. 다시 요청해 주세요.'],
+  UNAVAILABLE: ['지금 심사를 완료할 수 없어요.', '작성한 글은 남아 있어요. 잠시 뒤 다시 요청해 주세요.'],
 } satisfies Record<Review['decision'], [string, string]>
 
 const reasonText = {

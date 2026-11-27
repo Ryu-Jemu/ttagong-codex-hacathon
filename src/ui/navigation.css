@@ -102,8 +102,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .app-shell:not([data-motion="reduced"]) .bottom-nav-content::before { transition: left 230ms cubic-bezier(.25, .7, .3, 1); }
-  .app-shell:not([data-motion="reduced"]) .nav-icon { transition: transform 200ms cubic-bezier(.25, .7, .3, 1); }
+  .app-shell .bottom-nav-content::before { transition: left 230ms cubic-bezier(.25, .7, .3, 1); }
+  .app-shell .nav-icon { transition: transform 200ms cubic-bezier(.25, .7, .3, 1); }
 }
 
 @media (hover: hover) {

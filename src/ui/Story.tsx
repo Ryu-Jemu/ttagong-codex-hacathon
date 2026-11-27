@@ -47,12 +47,14 @@ export function StoryDate({ post }: { post: Post }) {
 export function Heart({ post, onHeart }: { post: Post; onHeart?: () => void }) {
   const contents = <><Icon name="heart" filled={post.hearted} /><span>{post.hearts}</span></>
   if (!onHeart) {
-    return <span className="heart" aria-label={`공감 ${post.hearts}개`}>{contents}</span>
+    return <span className="heart">
+      <span className="visually-hidden">좋아요 </span>{contents}<span className="visually-hidden">개</span>
+    </span>
   }
 
   return (
     <button className="heart" type="button" onClick={onHeart} aria-pressed={Boolean(post.hearted)}
-      aria-label={`공감 · ${post.title} · ${post.hearts}개`}>
+      aria-label={`좋아요 · ${post.title} · ${post.hearts}개`}>
       {contents}
     </button>
   )
@@ -68,7 +70,7 @@ export function StoryCards({ posts, onOpen, onHeart, empty, home = false }: {
   if (!posts.length) return <p className="empty-state">{empty}</p>
 
   return (
-    <div className={home ? 'story-list home-story-list' : 'story-list'}>
+    <div className={home ? 'story-list home-story-list' : 'story-list region-story-list'}>
       {posts.map((post) => {
         const photo = home ? homeStoryImages.get(post.id) : undefined
         const title = (

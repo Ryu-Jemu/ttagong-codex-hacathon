@@ -1,3 +1,5 @@
+import type { DemoBadge } from './badges';
+
 export type Post = {
   id: string;
   authorId: string;
@@ -18,13 +20,14 @@ export type ModerationResult = {
 
 export type Draft = { title: string; body: string; regionId: string };
 export type MusicRecommendation = { id: string; trackId: string; authorName: string; reason: string };
-export type DemoAlert = { id: string; text: string; read: boolean };
+export type DemoAlert = { id: string; kind: 'like' | 'badge'; text: string; read: boolean };
 export type DemoMessage = { id: string; text: string; mine: boolean };
 
 export type DemoController = {
   readOnly: boolean;
   posts: Post[];
   alerts: DemoAlert[];
+  badges: DemoBadge[];
   messages: DemoMessage[];
   recommendations: MusicRecommendation[];
   publish(draft: Draft): Promise<ModerationResult>;

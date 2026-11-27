@@ -1,3 +1,5 @@
+import { makeBadgeAlert, type DemoBadgeId } from './badges.ts';
+import { makeRegionalExamplePosts } from './regional-fixtures.ts';
 import type { DemoAlert, DemoMessage, MusicRecommendation, Post } from './types';
 
 export const DEMO_AUTHOR = { authorId: 'demo-you', authorName: '따공 이웃' };
@@ -6,6 +8,7 @@ export const DEMO_MESSAGE_LIMIT = 7;
 export type DemoState = {
   posts: Post[];
   alerts: DemoAlert[];
+  earnedBadgeIds: DemoBadgeId[];
   messages: DemoMessage[];
   recommendations: MusicRecommendation[];
 };
@@ -102,12 +105,14 @@ export function makeDemoState(now = Date.now()): DemoState {
         title: '산책길에서 잃어버린 모자를 돌려 드렸어요',
         body: '바람에 날린 모자가 제 발 앞에 멈췄어요. 앞서 걷던 분을 불러 건네드렸더니, 어디서 바다가 잘 보이는지도 알려 주셨어요.',
       },
+      ...makeRegionalExamplePosts(atHoursAgo),
     ],
+    earnedBadgeIds: ['first-story', 'first-song'],
     alerts: [
-      { id: 'example-alert-1', read: false, text: '소담님이 ‘골목 화분을 처마 아래로 옮겼어요’에 공감을 남겼어요.' },
-      { id: 'example-alert-3', read: false, text: '이웃이 산책 얘기를 보냈어요. 대화에서 답장을 읽어 보세요.' },
-      { id: 'example-alert-4', read: true, text: '‘한 페이지가 될 수 있게’에 남긴 내 추천을 노래 추천에서 다시 읽을 수 있어요.' },
-      { id: 'example-alert-2', read: true, text: '제주 소식에 ‘버스 정류장에서 건네받은 귤 한 알’이 올라왔어요.' },
+      { id: 'example-alert-1', kind: 'like', read: false, text: '소담님이 ‘골목 화분을 처마 아래로 옮겼어요’에 좋아요를 눌렀어요.' },
+      makeBadgeAlert('first-song'),
+      { id: 'example-alert-like-2', kind: 'like', read: true, text: '민준님이 ‘산책길에서 잃어버린 모자를 돌려 드렸어요’에 좋아요를 눌렀어요.' },
+      makeBadgeAlert('first-story', true),
     ],
     messages: [
       { id: 'example-message-1', mine: false, text: '안녕하세요! 어제 함께 정리해 주셔서 고마웠어요.' },

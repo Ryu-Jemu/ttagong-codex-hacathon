@@ -7,7 +7,8 @@ import { getWarmth, regions, STORY_WARMTH_POINTS } from '../regions'
 import { Composer } from './Composer'
 import type { Draft, Review } from './Composer'
 import { Icon } from './Icon'
-import Music from './Music'
+import Music, { tracks } from './Music'
+import Profile from './Profile'
 import { Heart, newestFirst, popularStories, StoryCards, StoryDate, storyRegion } from './Story'
 import './styles.css'
 import './home.css'
@@ -25,7 +26,6 @@ type Tab = typeof tabs[number]['id']
 type Screen = { kind: 'tab' | 'compose' | 'thread' | 'region' } | { kind: 'alert'; id: string }
 
 const blankDraft = { title: '', body: '', regionId: '' }
-const motionPreferenceKey = 'ttagong.settings.reduce-motion'
 const regionPreferenceKey = 'ttagong.settings.region'
 const warmthNumber = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
 const mapRegions = [...regions].sort((a, b) => a.row - b.row || a.col - b.col)
@@ -35,14 +35,6 @@ const mapKey = [
   { band: 'medium', label: '0.04–0.09' },
   { band: 'high', label: '0.10 이상' },
 ] as const
-
-function loadMotionPreference() {
-  try {
-    return window.localStorage.getItem(motionPreferenceKey) === 'true'
-  } catch {
-    return false
-  }
-}
 
 function loadRegionPreference() {
   try {
@@ -150,12 +142,12 @@ export default function App() {
   const [regionPreferenceStatus, setRegionPreferenceStatus] = useState('')
   const [storyId, setStoryId] = useState<string | null>(null)
   const [sort, setSort] = useState<'recent' | 'popular'>('recent')
-  const [motionReduced, setMotionReduced] = useState(loadMotionPreference)
   const [musicReset, setMusicReset] = useState(0)
   const [draft, setDraft] = useState<Draft>(blankDraft)
   const [review, setReview] = useState<Review | null>(null)
   const [message, setMessage] = useState('')
   const [resetStatus, setResetStatus] = useState('')
+  const siteHeader = useRef<HTMLElement>(null)
   const publishing = useRef(false)
   const composingFromRegion = useRef(false)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -169,6 +161,20 @@ export default function App() {
   const nextScroll = useRef(0)
   const previousPage = useRef('')
   const page = tab + screen.kind + (screen.kind === 'alert' ? screen.id : '')
+
+  useLayoutEffect(() => {
+    const header = siteHeader.current
+    if (!header) return
+    const settings = document.documentElement.style
+    const measure = () => settings.setProperty('--site-header-height', `${header.offsetHeight}px`)
+    measure()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(header)
+    return () => {
+      observer?.disconnect()
+      settings.removeProperty('--site-header-height')
+    }
+  }, [])
 
   useLayoutEffect(() => {
     if (previousPage.current && previousPage.current !== page) {
@@ -193,6 +199,7 @@ export default function App() {
   const regionWarmth = region && getWarmth(demo.posts, region)
   const latest = [...demo.posts].sort(newestFirst)
   const homePosts = (sort === 'recent' ? latest : popularStories(demo.posts)).slice(0, 3)
+  const regionPosts = region ? latest.filter((post) => post.regionId === region.id) : latest
   const selectedPost = storyId ? demo.posts.find((post) => post.id === storyId) : undefined
   const selectedAlert = screen.kind === 'alert' ? demo.alerts.find((alert) => alert.id === screen.id) : undefined
   const unread = demo.alerts.filter((alert) => !alert.read).length
@@ -303,16 +310,6 @@ export default function App() {
     resetDialog.current?.close()
   }
 
-  function toggleMotion() {
-    const next = !motionReduced
-    setMotionReduced(next)
-    try {
-      window.localStorage.setItem(motionPreferenceKey, String(next))
-    } catch {
-      // The live preference still applies when storage is unavailable.
-    }
-  }
-
   function returnToStoryList() {
     setStoryId(null)
     const opener = storyOpener.current
@@ -342,9 +339,9 @@ export default function App() {
   )
 
   return (
-    <div className="app-shell" data-motion={motionReduced ? 'reduced' : undefined}>
+    <div className="app-shell">
       <a className="skip-link" href="#main-content">본문 바로가기</a>
-      <header className="site-header">
+      <header className="site-header" ref={siteHeader}>
         <div className="header-content">
           <button type="button" className="wordmark" onClick={() => navigate('home')} aria-label="따공 홈">
             <span className="brand-mark"><Icon name="brand" /></span>
@@ -363,11 +360,16 @@ export default function App() {
           <>
             <div className="home-overview">
               <section className="hero" aria-labelledby="hero-title">
-                <h1 id="hero-title" ref={heading} tabIndex={-1}>작은 친절을 나눠요</h1>
-                {followedRegion && <button type="button" className="home-region-link"
-                  onClick={() => openRegion(followedRegion.id)}>
-                  <Icon name="pin" />{followedRegion.shortName} 소식
-                </button>}
+                <h1 id="hero-title" ref={heading} tabIndex={-1}>우리 동네의 따뜻한 소식</h1>
+                <div className="hero-actions">
+                  <a className="button button-primary hero-stories-link" href="#stories-title">
+                    이웃 이야기 읽기<Icon name="down" />
+                  </a>
+                  {followedRegion && <button type="button" className="home-region-link"
+                    onClick={() => openRegion(followedRegion.id)}>
+                    <Icon name="pin" />{followedRegion.shortName} 소식
+                  </button>}
+                </div>
                 <figure className="hero-picture">
                   <img src="/neighborhood-books.jpg" width="1120" height="746" fetchPriority="high"
                     alt="비 온 뒤 동네 책방 앞에서 함께 책을 정리하는 이웃" />
@@ -377,15 +379,15 @@ export default function App() {
 
               <section className="home-stories" aria-labelledby="stories-title">
                 <div className="section-heading section-with-control">
-                  <h2 id="stories-title">이웃 소식</h2>
-                  <div className="segmented-control" role="group" aria-label="이야기 정렬">
+                  <h2 id="stories-title" tabIndex={-1}>이웃 소식</h2>
+                  <div className="segmented-control" role="group" aria-label="소식 정렬">
                     <button type="button" aria-pressed={sort === 'recent'} onClick={() => setSort('recent')}>최신</button>
                     <button type="button" aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>인기</button>
                   </div>
                 </div>
-                {sort === 'popular' && <p className="sort-criteria">최근 7일 공감순</p>}
+                {sort === 'popular' && <p className="sort-criteria">최근 7일 좋아요순</p>}
                 <StoryCards key={sort} posts={homePosts} {...storyActions} home
-                  empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
+                  empty={sort === 'popular' ? '최근 7일 동안 올라온 소식이 없어요.' : '아직 올라온 소식이 없어요.'} />
               </section>
             </div>
             <RegionMap posts={demo.posts} onRegion={openRegion} followedRegionId={followedRegionId}
@@ -416,11 +418,14 @@ export default function App() {
               {regionWarmth.score !== null && <span>인구 10만 명당 {warmthNumber.format(regionWarmth.score)}P</span>}
             </p>}
             <section className="region-feed" aria-labelledby="region-feed-title">
-              <div className="section-heading">
-                <h2 id="region-feed-title">{region ? `${region.shortName} 이야기` : '전국 이야기'}</h2>
+              <div className="section-heading section-with-control">
+                <h2 id="region-feed-title">{region ? `${region.shortName} 소식` : '전국 소식'}</h2>
+                {regionPosts.length > 0 && <p className="region-story-count">{regionPosts.length}편</p>}
               </div>
-              <StoryCards posts={region ? latest.filter((post) => post.regionId === region.id) : latest}
-                {...storyActions} empty="이 지역에 아직 게시된 이야기가 없습니다." />
+              <StoryCards posts={regionPosts} {...storyActions}
+                empty={region ? `아직 ${region.shortName}에 올라온 소식이 없어요.` : '아직 올라온 소식이 없어요.'} />
+              {region && !regionPosts.length && <button type="button" className="button button-outline region-empty-action"
+                onClick={() => openRegion('')}>전체 지역 보기</button>}
             </section>
           </>
         )}
@@ -445,12 +450,12 @@ export default function App() {
             {demo.alerts.length ? (
               <ul className="item-list">
                 {demo.alerts.map((alert) => (
-                  <li key={alert.id}>
+                  <li key={alert.id} data-alert-kind={alert.kind}>
                     <button className="item-row" type="button" onClick={() => {
                       if (!demo.readOnly) demo.readAlert(alert.id)
                       setScreen({ kind: 'alert', id: alert.id })
                     }}>
-                      <span className="item-icon"><Icon name="bell" /></span>
+                      <span className="item-icon"><Icon name={alert.kind === 'badge' ? 'badge' : 'heart'} /></span>
                       <strong>{alert.text}</strong>
                       {!alert.read && <span className="item-status">새 알림</span>}
                       <Icon name="next" />
@@ -458,7 +463,7 @@ export default function App() {
                   </li>
                 ))}
               </ul>
-            ) : <p className="empty-state">표시할 알림이 없습니다.</p>}
+            ) : <p className="empty-state">아직 알림이 없어요.</p>}
           </>
         )}
 
@@ -466,47 +471,40 @@ export default function App() {
           <>
             {back('알림 목록')}
             <article className="surface narrow-surface">
-              <h1 ref={heading} tabIndex={-1}>알림 내용</h1>
-              <p>{selectedAlert?.text ?? '이 알림을 찾을 수 없습니다.'}</p>
+              <h1 ref={heading} tabIndex={-1}>{selectedAlert?.kind === 'badge' ? '배지 달성' : '좋아요 알림'}</h1>
+              <p>{selectedAlert?.text ?? '이 알림을 찾을 수 없어요.'}</p>
             </article>
           </>
         )}
 
         {screen.kind === 'tab' && tab === 'profile' && (
-          <>
-            <div className="page-heading"><h1 ref={heading} tabIndex={-1}>프로필</h1></div>
-            <section className="surface narrow-surface profile-card" aria-labelledby="profile-title">
-              <span className="item-icon"><Icon name="profile" /></span>
-              <div><h2 id="profile-title">따공 이웃</h2><p>시연 프로필</p></div>
-            </section>
-            <button type="button" role="switch" aria-checked={motionReduced} className="item-row motion-setting"
-              onClick={toggleMotion}>
-              <strong>움직임 줄이기</strong>
-              <span className="motion-switch" aria-hidden="true" />
-            </button>
-            <section className="profile-stories" aria-labelledby="profile-stories-title">
-              <div className="section-heading"><h2 id="profile-stories-title">내가 쓴 이야기</h2></div>
-              <StoryCards posts={latest.filter((post) => post.authorId === DEMO_AUTHOR.authorId)}
-                {...storyActions} empty="아직 작성한 이야기가 없습니다." />
-            </section>
-            {!demo.readOnly && (
+          <Profile heading={heading} displayName={DEMO_AUTHOR.authorName}
+            posts={latest.filter((post) => post.authorId === DEMO_AUTHOR.authorId)}
+            recommendations={demo.recommendations.flatMap((recommendation) => {
+              if (recommendation.authorName !== DEMO_AUTHOR.authorName) return []
+              const track = tracks.find((song) => song.id === recommendation.trackId)
+              return track ? [{ ...recommendation, title: track.title, artist: track.artist }] : []
+            })}
+            badges={demo.badges} followedRegionName={followedRegion?.name}
+            onRegion={() => openRegion(followedRegionId)} onMusic={() => navigate('music')}
+            onOpen={storyActions.onOpen}
+            resetPanel={!demo.readOnly && (
               <section className="surface narrow-surface reset-panel" aria-labelledby="reset-title">
                 <h2 id="reset-title">시연 데이터</h2>
-                <p>이 브라우저에 저장된 글, 공감, 읽음 표시, 대화 내용을 처음 상태로 되돌립니다.</p>
+                <p>이 브라우저에 저장된 글과 노래 추천, 좋아요, 배지, 알림, 대화를 시연 시작 상태로 되돌립니다.</p>
                 <button type="button" className="button button-outline" disabled={review?.decision === 'PENDING'}
                   onClick={() => { setResetStatus(''); resetDialog.current?.showModal() }}>시연 데이터 초기화</button>
                 <p className="reset-status" role="status">{resetStatus}</p>
                 <dialog ref={resetDialog} aria-labelledby="reset-dialog-title">
                   <h2 id="reset-dialog-title">시연 데이터를 초기화할까요?</h2>
-                  <p>저장된 활동과 작성 중인 이야기가 지워집니다.</p>
+                  <p>시연 중에 남긴 활동과 작성 중인 이야기가 지워집니다.</p>
                   <div className="form-actions">
                     <form method="dialog"><button className="button button-outline" type="submit" autoFocus>계속 사용</button></form>
                     <button type="button" className="button button-primary" onClick={resetDemo}>초기화</button>
                   </div>
                 </dialog>
               </section>
-            )}
-          </>
+            )} />
         )}
 
         {screen.kind === 'tab' && tab === 'messages' && (
@@ -529,7 +527,7 @@ export default function App() {
                 {visibleMessages.map((entry) => <li key={entry.id} className={entry.mine ? 'mine' : ''}>
                   <span>{entry.mine ? '나' : '이웃'}</span><p>{entry.text}</p>
                 </li>)}
-              </ol> : <p className="empty-state">아직 대화가 없습니다.</p>}
+              </ol> : <p className="empty-state">아직 대화가 없어요.</p>}
               {!demo.readOnly && (chatFull
                 ? <p className="thread-limit" ref={threadLimit} tabIndex={-1} role="status">시연 메시지 {DEMO_MESSAGE_LIMIT}개를 모두 표시했어요.</p>
                 : (
@@ -555,7 +553,7 @@ export default function App() {
                 <span aria-hidden="true">×</span> 닫기
               </button>
             </div>
-            <h2 id="story-dialog-title">{selectedPost?.title ?? '이야기를 찾을 수 없습니다.'}</h2>
+            <h2 id="story-dialog-title">{selectedPost?.title ?? '이야기를 찾을 수 없어요.'}</h2>
             {selectedPost && <>
               <p className="story-detail-author">{selectedPost.authorName}</p>
               <p className="story-body">{selectedPost.body}</p>

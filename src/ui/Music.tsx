@@ -62,7 +62,7 @@ const reviewMessages = {
   APPROVED: '추천 글을 게시했습니다.',
   BLOCKED: '추천 글이 차단되었습니다. 이유를 수정한 뒤 다시 요청해 주세요.',
   HOLD: '심사가 보류되었습니다. 추천하는 이유를 더 적고 다시 요청해 주세요.',
-  UNAVAILABLE: '심사에 연결할 수 없습니다. 입력은 그대로 있습니다.',
+  UNAVAILABLE: '지금 심사를 완료할 수 없어요. 작성한 추천 글은 남아 있어요.',
 }
 
 const blockGuidance = {
@@ -267,12 +267,12 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
         </ul>
       ) : (
         <div className="empty-state music-empty">
-          <p>검색 조건과 일치하는 추천 곡이 없습니다.</p>
+          <p>맞는 곡이 없어요.</p>
           <button type="button" className="button button-outline" onClick={() => {
             setSearch('')
             setMood('전체')
             searchInput.current?.focus()
-          }}>필터 초기화</button>
+          }}>전체 추천곡 보기</button>
         </div>
       )}
     </section>

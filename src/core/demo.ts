@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
+import { awardBadges, isBadgeId, listBadges } from './badges';
 import { DEMO_AUTHOR, DEMO_MESSAGE_LIMIT, makeDemoState, type DemoState } from './fixtures';
 import { MUSIC_REASON_LIMIT, parseModerationResult, validModerationText } from './moderation';
-import type { DemoController, Draft, ModerationResult, Post } from './types';
+import type { DemoAlert, DemoController, Draft, ModerationResult, Post } from './types';
 import { regions } from '../regions';
 
 const STORAGE_KEY = 'ongi-jido.demo.v1';
@@ -10,6 +11,18 @@ const unavailable = { decision: 'UNAVAILABLE' } as const;
 function appendMissing<Entry extends { id: string }>(existing: Entry[], added: Entry[]): Entry[] {
   const existingIds = new Set(existing.map(({ id }) => id));
   return [...existing, ...added.filter(({ id }) => !existingIds.has(id))];
+}
+
+function restoreAlerts(initial: DemoAlert[], stored: DemoAlert[]): DemoAlert[] {
+  const saved = new Map(stored
+    .filter((alert) => typeof alert?.id === 'string' && typeof alert.read === 'boolean')
+    .map((alert) => [alert.id, alert]));
+  const examples = initial.map((alert) => ({ ...alert, read: saved.get(alert.id)?.read ?? alert.read }));
+  const exampleIds = new Set(initial.map(({ id }) => id));
+  const activity = [...saved.values()].filter(({ id, kind, text }) =>
+    !exampleIds.has(id) && typeof text === 'string' &&
+    ((kind === 'like' && id.startsWith('like-')) || (kind === 'badge' && id.startsWith('badge-') && isBadgeId(id.slice(6)))));
+  return [...activity, ...examples];
 }
 
 function loadState(): DemoState {
@@ -29,20 +42,17 @@ function loadState(): DemoState {
           ...post,
           featuredComment: post.featuredComment ?? exampleComments.get(post.id),
         }));
-        const savedAlerts = new Map(state.alerts.map((alert) => [alert.id, alert]));
-        const exampleAlerts = initial.alerts.map((alert) => ({
-          ...alert,
-          read: savedAlerts.get(alert.id)?.read ?? alert.read,
-        }));
         const savedMessages = new Map(state.messages.map((message) => [message.id, message]));
         const exampleMessages = initial.messages.map((message) => savedMessages.get(message.id) ?? message);
         const savedRecommendations = Array.isArray(state.recommendations) ? state.recommendations : [];
-        return {
+        const savedBadges = Array.isArray(state.earnedBadgeIds) ? state.earnedBadgeIds.filter(isBadgeId) : [];
+        return awardBadges({
           posts: appendMissing(savedPosts, examplePosts),
-          alerts: appendMissing(exampleAlerts, state.alerts),
+          alerts: restoreAlerts(initial.alerts, state.alerts),
+          earnedBadgeIds: [...new Set([...initial.earnedBadgeIds, ...savedBadges])],
           messages: appendMissing(exampleMessages, state.messages),
           recommendations: appendMissing(savedRecommendations, initial.recommendations),
-        };
+        }, DEMO_AUTHOR);
       }
     }
   } catch {
@@ -108,7 +118,7 @@ export function useDemo(): DemoController {
     return reviewAndSave(title, body, () => {
       const post: Post = { ...DEMO_AUTHOR, id: newId(), title, body, regionId, createdAt: new Date().toISOString(), hearts: 0 };
       const latest = current.current;
-      return save({ ...latest, posts: [post, ...latest.posts] });
+      return save(awardBadges({ ...latest, posts: [post, ...latest.posts] }, DEMO_AUTHOR));
     });
   }
 
@@ -118,22 +128,26 @@ export function useDemo(): DemoController {
     return reviewAndSave(title, reason, () => {
       const entry = { id: newId(), trackId, authorName: DEMO_AUTHOR.authorName, reason };
       const latest = current.current;
-      return save({ ...latest, recommendations: [entry, ...latest.recommendations] });
+      return save(awardBadges({ ...latest, recommendations: [entry, ...latest.recommendations] }, DEMO_AUTHOR));
     }, 'music');
   }
 
   function toggleHeart(id: string) {
     if (readOnly) return;
     const latest = current.current;
-    if (!latest.posts.some((post) => post.id === id)) return;
-    save({
-      ...latest,
-      posts: latest.posts.map((post) =>
-        post.id === id
-          ? { ...post, hearted: !post.hearted, hearts: Math.max(0, post.hearts + (post.hearted ? -1 : 1)) }
-          : post,
-      ),
-    });
+    const post = latest.posts.find((entry) => entry.id === id);
+    if (!post) return;
+    const hearted = !post.hearted;
+    const updated = { ...post, hearted, hearts: Math.max(0, post.hearts + (hearted ? 1 : -1)) };
+    const posts = latest.posts.map((entry) => entry.id === id ? updated : entry);
+    if (!hearted) {
+      save({ ...latest, posts });
+      return;
+    }
+
+    const alert: DemoAlert = { id: `like-${id}`, kind: 'like', text: `‘${post.title}’에 좋아요를 눌렀어요.`, read: false };
+    const alerts = [alert, ...latest.alerts.filter((entry) => entry.id !== alert.id)];
+    save(awardBadges({ ...latest, posts, alerts }, DEMO_AUTHOR));
   }
 
   function readAlert(id: string) {
@@ -158,5 +172,5 @@ export function useDemo(): DemoController {
     if (save(makeDemoState())) pending.current?.abort();
   }
 
-  return { readOnly, ...state, publish, publishRecommendation, toggleHeart, readAlert, sendMessage, reset };
+  return { readOnly, ...state, badges: listBadges(state.earnedBadgeIds), publish, publishRecommendation, toggleHeart, readAlert, sendMessage, reset };
 }
