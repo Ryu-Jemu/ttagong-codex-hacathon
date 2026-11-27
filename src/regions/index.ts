@@ -1,3 +1,5 @@
+import { krmapTiles } from './krmap-tiles.ts';
+
 export type Region = {
   id: string;
   name: string;
@@ -7,25 +9,30 @@ export type Region = {
   col: number;
 };
 
-// 행정안전부 2026년 10월 주민등록 인구와 krmap 시도 네모 타일. 출처는 NOTICE.md 참고.
-export const regions: readonly Region[] = [
-  { id: "1100000000", name: "서울특별시", shortName: "서울", population: 9_274_392, row: 1, col: 2 },
-  { id: "1200000000", name: "전남광주통합특별시", shortName: "전남광주", population: 3_152_970, row: 4, col: 2 },
-  { id: "2600000000", name: "부산광역시", shortName: "부산", population: 3_226_446, row: 5, col: 4 },
-  { id: "2700000000", name: "대구광역시", shortName: "대구", population: 2_345_185, row: 3, col: 4 },
-  { id: "2800000000", name: "인천광역시", shortName: "인천", population: 3_070_203, row: 2, col: 1 },
-  { id: "3000000000", name: "대전광역시", shortName: "대전", population: 1_443_171, row: 3, col: 3 },
-  { id: "3100000000", name: "울산광역시", shortName: "울산", population: 1_085_888, row: 4, col: 4 },
-  { id: "3600000000", name: "세종특별자치시", shortName: "세종", population: 390_618, row: 3, col: 2 },
-  { id: "4100000000", name: "경기도", shortName: "경기", population: 13_780_735, row: 2, col: 2 },
-  { id: "5100000000", name: "강원특별자치도", shortName: "강원", population: 1_506_690, row: 1, col: 3 },
-  { id: "4300000000", name: "충청북도", shortName: "충북", population: 1_602_382, row: 2, col: 3 },
-  { id: "4400000000", name: "충청남도", shortName: "충남", population: 2_140_278, row: 3, col: 1 },
-  { id: "5200000000", name: "전북특별자치도", shortName: "전북", population: 1_715_109, row: 4, col: 1 },
-  { id: "4700000000", name: "경상북도", shortName: "경북", population: 2_489_894, row: 2, col: 4 },
-  { id: "4800000000", name: "경상남도", shortName: "경남", population: 3_189_204, row: 4, col: 3 },
-  { id: "5000000000", name: "제주특별자치도", shortName: "제주", population: 662_117, row: 6, col: 1 },
-];
+// 행정안전부의 2026년 10월 주민등록 인구. 위치와 축약명은 krmap 원본을 가공한 모듈에서 가져온다.
+const residentPopulations = [
+  { id: "1100000000", name: "서울특별시", population: 9_274_392 },
+  { id: "1200000000", name: "전남광주통합특별시", population: 3_152_970 },
+  { id: "2600000000", name: "부산광역시", population: 3_226_446 },
+  { id: "2700000000", name: "대구광역시", population: 2_345_185 },
+  { id: "2800000000", name: "인천광역시", population: 3_070_203 },
+  { id: "3000000000", name: "대전광역시", population: 1_443_171 },
+  { id: "3100000000", name: "울산광역시", population: 1_085_888 },
+  { id: "3600000000", name: "세종특별자치시", population: 390_618 },
+  { id: "4100000000", name: "경기도", population: 13_780_735 },
+  { id: "5100000000", name: "강원특별자치도", population: 1_506_690 },
+  { id: "4300000000", name: "충청북도", population: 1_602_382 },
+  { id: "4400000000", name: "충청남도", population: 2_140_278 },
+  { id: "5200000000", name: "전북특별자치도", population: 1_715_109 },
+  { id: "4700000000", name: "경상북도", population: 2_489_894 },
+  { id: "4800000000", name: "경상남도", population: 3_189_204 },
+  { id: "5000000000", name: "제주특별자치도", population: 662_117 },
+] as const;
+
+export const regions: readonly Region[] = residentPopulations.map((region) => ({
+  ...region,
+  ...krmapTiles[region.name],
+}));
 
 type PublicPost = {
   authorId: string;

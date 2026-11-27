@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useDemo } from '../core/demo'
 import { DEMO_AUTHOR } from '../core/fixtures'
@@ -10,6 +10,7 @@ import { Icon } from './Icon'
 import { Heart, newestFirst, popularStories, StoryCards, StoryDate, storyRegion } from './Story'
 import './styles.css'
 import './home.css'
+import './navigation.css'
 
 const tabs = [
   { id: 'home', label: '홈', icon: 'home' },
@@ -23,8 +24,17 @@ type Tab = typeof tabs[number]['id']
 type Screen = { kind: 'tab' | 'compose' | 'thread' } | { kind: 'alert'; id: string }
 
 const blankDraft = { title: '', body: '', regionId: '' }
+const motionPreferenceKey = 'ttagong.settings.reduce-motion'
 const warmthNumber = new Intl.NumberFormat('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const mapRegions = [...regions].sort((a, b) => a.row - b.row || a.col - b.col)
+
+function loadMotionPreference() {
+  try {
+    return window.localStorage.getItem(motionPreferenceKey) === 'true'
+  } catch {
+    return false
+  }
+}
 
 function scoreBand(score: number | null) {
   if (score === null) return 'missing'
@@ -75,6 +85,7 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
             <li><i aria-hidden="true" />표본 부족</li>
           </ul>
           <p>인구 기준 · 행정안전부 주민등록 인구통계, 2026년 10월</p>
+          <p>타일 배치 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS 행정구역 경계</p>
         </details>
       </div>
     </section>
@@ -88,6 +99,7 @@ export default function App() {
   const [regionId, setRegionId] = useState('')
   const [storyId, setStoryId] = useState<string | null>(null)
   const [sort, setSort] = useState<'recent' | 'popular'>('recent')
+  const [motionReduced, setMotionReduced] = useState(loadMotionPreference)
   const [draft, setDraft] = useState<Draft>(blankDraft)
   const [review, setReview] = useState<Review | null>(null)
   const [message, setMessage] = useState('')
@@ -98,14 +110,19 @@ export default function App() {
   const storyDialog = useRef<HTMLDialogElement>(null)
   const storyClose = useRef<HTMLButtonElement>(null)
   const storyOpener = useRef<HTMLButtonElement>(null)
+  const activeTab = useRef<HTMLButtonElement>(null)
+  const tabScroll = useRef<Partial<Record<Tab, number>>>({})
+  const nextScroll = useRef(0)
   const previousPage = useRef('')
   const page = tab + screen.kind + (screen.kind === 'alert' ? screen.id : '')
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (previousPage.current && previousPage.current !== page) {
-      window.scrollTo(0, 0)
-      heading.current?.focus({ preventScroll: true })
+      window.scrollTo(0, nextScroll.current)
+      const target = window.scrollY > 0 ? activeTab.current : heading.current
+      target?.focus({ preventScroll: true })
     }
+    nextScroll.current = 0
     previousPage.current = page
   }, [page])
 
@@ -125,14 +142,26 @@ export default function App() {
   const selectedAlert = screen.kind === 'alert' ? demo.alerts.find((alert) => alert.id === screen.id) : undefined
   const unread = demo.alerts.filter((alert) => !alert.read).length
 
-  function navigate(nextTab: Tab) {
+  function rememberTabScroll() {
+    if (screen.kind === 'tab') tabScroll.current[tab] = window.scrollY
+  }
+
+  function navigate(nextTab: Tab, resetPosition = false) {
+    if (tab === nextTab && screen.kind === 'tab') {
+      window.scrollTo(0, 0)
+      heading.current?.focus({ preventScroll: true })
+      return
+    }
+
+    rememberTabScroll()
+    nextScroll.current = resetPosition ? 0 : (tabScroll.current[nextTab] ?? 0)
     setTab(nextTab)
     setScreen({ kind: 'tab' })
   }
 
   function openRegion(id: string) {
     setRegionId(id)
-    navigate('regions')
+    navigate('regions', true)
   }
 
   function openComposer() {
@@ -140,6 +169,7 @@ export default function App() {
     if (tab === 'regions' && region && !draft.regionId) {
       setDraft((current) => ({ ...current, regionId: region.id }))
     }
+    rememberTabScroll()
     setScreen({ kind: 'compose' })
   }
 
@@ -184,12 +214,28 @@ export default function App() {
     resetDialog.current?.close()
   }
 
+  function toggleMotion() {
+    const next = !motionReduced
+    setMotionReduced(next)
+    try {
+      window.localStorage.setItem(motionPreferenceKey, String(next))
+    } catch {
+      // The live preference still applies when storage is unavailable.
+    }
+  }
+
   function returnToStoryList() {
     setStoryId(null)
     const opener = storyOpener.current
     const target = opener?.isConnected ? opener : heading.current
     target?.focus({ preventScroll: true })
     storyOpener.current = null
+  }
+
+  function openStoryRegion(id: string) {
+    storyOpener.current = null
+    storyDialog.current?.close()
+    openRegion(id)
   }
 
   const storyActions = {
@@ -201,13 +247,13 @@ export default function App() {
   }
 
   const back = (label: string) => (
-    <button type="button" className="back-link" onClick={() => setScreen({ kind: 'tab' })}>
+    <button type="button" className="back-link" onClick={() => navigate(tab)}>
       <Icon name="back" />{label}
     </button>
   )
 
   return (
-    <>
+    <div className="app-shell" data-motion={motionReduced ? 'reduced' : undefined}>
       <a className="skip-link" href="#main-content">본문 바로가기</a>
       <header className="site-header">
         <div className="header-content">
@@ -244,7 +290,8 @@ export default function App() {
                     <button type="button" aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>인기</button>
                   </div>
                 </div>
-                <StoryCards posts={homePosts} {...storyActions} home
+                {sort === 'popular' && <p className="sort-criteria">최근 7일 공감순</p>}
+                <StoryCards key={sort} posts={homePosts} {...storyActions} home
                   empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
               </section>
             </div>
@@ -330,6 +377,11 @@ export default function App() {
               <span className="item-icon"><Icon name="profile" /></span>
               <div><h2 id="profile-title">따공 이웃</h2><p>시연 프로필</p></div>
             </section>
+            <button type="button" role="switch" aria-checked={motionReduced} className="item-row motion-setting"
+              onClick={toggleMotion}>
+              <strong>움직임 줄이기</strong>
+              <span className="motion-switch" aria-hidden="true" />
+            </button>
             <section className="profile-stories" aria-labelledby="profile-stories-title">
               <div className="section-heading"><h2 id="profile-stories-title">내가 쓴 이야기</h2></div>
               <StoryCards posts={latest.filter((post) => post.authorId === DEMO_AUTHOR.authorId)}
@@ -403,7 +455,12 @@ export default function App() {
             {selectedPost && <>
               <p className="story-detail-author">{selectedPost.authorName}</p>
               <p className="story-body">{selectedPost.body}</p>
-              <Heart post={selectedPost} onHeart={demo.readOnly ? undefined : () => demo.toggleHeart(selectedPost.id)} />
+              <div className="story-actions">
+                <Heart post={selectedPost} onHeart={demo.readOnly ? undefined : () => demo.toggleHeart(selectedPost.id)} />
+                <button type="button" className="button button-outline" onClick={() => openStoryRegion(selectedPost.regionId)}>
+                  {storyRegion(selectedPost)} 소식 더 보기 <Icon name="next" />
+                </button>
+              </div>
             </>}
           </article>}
         </dialog>
@@ -413,6 +470,7 @@ export default function App() {
         <div className="bottom-nav-content">
           {tabs.map((item) => (
             <button key={item.id} type="button" aria-current={tab === item.id ? 'page' : undefined}
+              ref={tab === item.id ? activeTab : undefined}
               aria-label={item.id === 'alerts' && unread ? `알림, 새 알림 ${unread}개` : undefined}
               onClick={() => navigate(item.id)}>
               <span className="nav-icon"><Icon name={item.icon} />{item.id === 'alerts' && unread > 0 && <i />}</span>
@@ -421,6 +479,6 @@ export default function App() {
           ))}
         </div>
       </nav>
-    </>
+    </div>
   )
 }

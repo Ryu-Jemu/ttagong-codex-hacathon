@@ -44,6 +44,7 @@
 }
 
 .home-stories .section-heading { margin-block-end: 10px; }
+.sort-criteria { margin-block: -2px 8px; color: var(--muted); font-size: .8125rem; }
 .home-story-list { gap: 9px; }
 
 .home-story-list .story-card {
@@ -125,13 +126,20 @@ html:has(.story-dialog[open]) { overflow: hidden; }
 
 .story-close span { font-size: 1.25rem; line-height: 1; }
 .story-dialog h2 { font-size: clamp(1.45rem, 5vw, 2.22rem); }
+.story-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .story-dialog[open] { animation: story-appear 170ms ease-out; }
+  .app-shell:not([data-motion="reduced"]) .home-story-list .story-card { animation: story-list-appear 240ms ease-out both; }
+  .home-story-list .story-card:nth-child(2) { animation-delay: 36ms; }
+  .home-story-list .story-card:nth-child(3) { animation-delay: 72ms; }
+  .app-shell:not([data-motion="reduced"]) .story-dialog[open] { animation: story-appear 260ms cubic-bezier(.2, .75, .25, 1); }
 }
 
+@keyframes story-list-appear {
+  from { opacity: .55; translate: 0 7px; }
+}
 @keyframes story-appear {
-  from { transform: translateY(6px); }
+  from { opacity: .92; transform: translateY(14px) scale(.98); }
 }
 
 @media (min-width: 761px) {
