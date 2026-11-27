@@ -9,6 +9,13 @@ const storyDate = new Intl.DateTimeFormat('ko-KR', {
   day: 'numeric',
 })
 
+const homeStoryImages = new Map([
+  ['example-seoul-1', '/story-rain.webp'],
+  ['example-busan-1', '/story-coast.webp'],
+  ['example-seoul-2', '/story-bike.webp'],
+  ['example-jeju-1', '/story-garden.webp'],
+])
+
 export function newestFirst(a: Post, b: Post) {
   return Date.parse(b.createdAt) - Date.parse(a.createdAt) || compareIds(a, b)
 }
@@ -51,38 +58,51 @@ export function Heart({ post, onHeart }: { post: Post; onHeart?: () => void }) {
   )
 }
 
-export function StoryCards({ posts, onOpen, onHeart, empty, deck = false }: {
+export function StoryCards({ posts, onOpen, onHeart, empty, home = false }: {
   posts: readonly Post[]
   onOpen: (post: Post, opener: HTMLButtonElement) => void
   onHeart?: (id: string) => void
   empty: string
-  deck?: boolean
+  home?: boolean
 }) {
   if (!posts.length) return <p className="empty-state">{empty}</p>
 
   return (
-    <div className={deck ? 'story-list story-deck' : 'story-list'}>
-      {posts.map((post) => (
-        <article className="story-card" key={post.id}>
-          {deck
-            ? <p className="deck-byline">{post.authorName}</p>
-            : <div className="story-meta">
-                <span className="region-label"><Icon name="pin" />{storyRegion(post)}</span>
-                <StoryDate post={post} />
-              </div>}
+    <div className={home ? 'story-list home-story-list' : 'story-list'}>
+      {posts.map((post) => {
+        const photo = home ? homeStoryImages.get(post.id) : undefined
+        const title = (
           <h3>
             <button type="button" className="story-link" aria-haspopup="dialog"
               onClick={(event) => onOpen(post, event.currentTarget)}>{post.title}</button>
           </h3>
-          {!deck && <>
-            <p className="story-preview">{post.body}</p>
-            <div className="story-footer">
-              <span>{post.authorName}</span>
-              <Heart post={post} onHeart={onHeart ? () => onHeart(post.id) : undefined} />
-            </div>
-          </>}
-        </article>
-      ))}
+        )
+
+        return (
+          <article className="story-card" key={post.id}>
+            {home ? <>
+              {photo && <div className="home-story-media">
+                <img src={photo} alt="" loading="lazy" decoding="async" />
+              </div>}
+              <div className="home-story-copy">
+                <p className="home-story-byline">{post.authorName}</p>
+                {title}
+              </div>
+            </> : <>
+              <div className="story-meta">
+                <span className="region-label"><Icon name="pin" />{storyRegion(post)}</span>
+                <StoryDate post={post} />
+              </div>
+              {title}
+              <p className="story-preview">{post.body}</p>
+              <div className="story-footer">
+                <span>{post.authorName}</span>
+                <Heart post={post} onHeart={onHeart ? () => onHeart(post.id) : undefined} />
+              </div>
+            </>}
+          </article>
+        )
+      })}
     </div>
   )
 }

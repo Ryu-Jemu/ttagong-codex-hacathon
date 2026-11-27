@@ -9,7 +9,7 @@ import type { Draft, Review } from './Composer'
 import { Icon } from './Icon'
 import { Heart, newestFirst, popularStories, StoryCards, StoryDate, storyRegion } from './Story'
 import './styles.css'
-import './deck.css'
+import './home.css'
 
 const tabs = [
   { id: 'home', label: '홈', icon: 'home' },
@@ -228,9 +228,7 @@ export default function App() {
           <>
             <div className="home-overview">
               <section className="hero" aria-labelledby="hero-title">
-                <div className="hero-copy">
-                  <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
-                </div>
+                <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
                 <figure className="hero-picture">
                   <img src="/neighborhood-books.jpg" width="1120" height="746" fetchPriority="high"
                     alt="비 온 뒤 동네 책방 앞에서 함께 책을 정리하는 이웃" />
@@ -246,7 +244,7 @@ export default function App() {
                     <button type="button" aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>인기</button>
                   </div>
                 </div>
-                <StoryCards posts={homePosts} {...storyActions} deck
+                <StoryCards posts={homePosts} {...storyActions} home
                   empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
               </section>
             </div>
