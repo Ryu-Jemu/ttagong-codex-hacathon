@@ -112,6 +112,7 @@ html:has(.story-dialog[open]) { overflow: hidden; }
   }
   .story-deck .story-card:nth-child(2) { background: rgb(244 216 180 / .92); }
   .story-deck .story-card:nth-child(3) { background: rgb(235 212 191 / .92); }
+  .story-dialog { background: rgb(255 252 237 / .98); }
 }
 
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
@@ -123,6 +124,7 @@ html:has(.story-dialog[open]) { overflow: hidden; }
   }
   .story-deck .story-card:nth-child(2) { background: var(--caramel-light); }
   .story-deck .story-card:nth-child(3) { background: var(--cocoa-light); }
+  .story-dialog { background: var(--paper); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
