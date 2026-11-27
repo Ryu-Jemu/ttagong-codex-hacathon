@@ -44,7 +44,7 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
   return (
     <section className="map-section" aria-labelledby="warmth-title">
       <div className="section-heading">
-        <h2 id="warmth-title" tabIndex={-1}>지역별 온기지도</h2>
+        <h2 id="warmth-title">지역별 온기지도</h2>
         <p className="map-unit">최근 7일 · 인구 10만 명당</p>
       </div>
       <div className="map-surface">
@@ -184,12 +184,6 @@ export default function App() {
     resetDialog.current?.close()
   }
 
-  function jumpToMap() {
-    const mapTitle = document.getElementById('warmth-title')
-    mapTitle?.focus({ preventScroll: true })
-    mapTitle?.scrollIntoView({ block: 'start' })
-  }
-
   function returnToStoryList() {
     setStoryId(null)
     const opener = storyOpener.current
@@ -236,9 +230,6 @@ export default function App() {
               <section className="hero" aria-labelledby="hero-title">
                 <div className="hero-copy">
                   <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
-                  <button type="button" className="button button-accent" onClick={jumpToMap}>
-                    지역 지도 보기<Icon name="down" />
-                  </button>
                 </div>
                 <figure className="hero-picture">
                   <img src="/neighborhood-books.jpg" width="1120" height="746" fetchPriority="high"
@@ -249,7 +240,7 @@ export default function App() {
 
               <section className="home-stories" aria-labelledby="stories-title">
                 <div className="section-heading section-with-control">
-                  <h2 id="stories-title">이웃의 이야기</h2>
+                  <h2 id="stories-title">이웃 소식</h2>
                   <div className="segmented-control" role="group" aria-label="이야기 정렬">
                     <button type="button" aria-pressed={sort === 'recent'} onClick={() => setSort('recent')}>최신</button>
                     <button type="button" aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>인기</button>
