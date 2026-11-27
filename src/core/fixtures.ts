@@ -43,6 +43,30 @@ export function makeDemoState(now = Date.now()): DemoState {
         title: '첫 수확을 이웃과 나눴어요',
         body: '작은 텃밭에서 거둔 채소를 이웃에게 건넸어요. 돌아오는 길에 고맙다는 말을 들어 마음이 따뜻했어요.',
       },
+      {
+        id: 'example-busan-2', authorId: 'example-seojun', authorName: '서준',
+        regionId: '2600000000', createdAt: atHoursAgo(58), hearts: 7,
+        title: '잃어버린 장갑을 찾아 주셨어요',
+        body: '아침에 떨어뜨린 장갑을 시장 상인분이 챙겨 두셨어요. 덕분에 귀갓길 손이 따뜻했습니다.',
+      },
+      {
+        id: 'example-jeju-2', authorId: 'example-gaeul', authorName: '가을',
+        regionId: '5000000000', createdAt: atHoursAgo(64), hearts: 4,
+        title: '마을 회관에서 처음 뜨개질을 배웠어요',
+        body: '실이 자꾸 엉켰는데 옆자리 이웃이 천천히 풀어 주셨어요. 오늘 배운 방법으로 작은 목도리를 뜨고 있어요.',
+      },
+      {
+        id: 'example-busan-3', authorId: 'example-minseo', authorName: '민서',
+        regionId: '2600000000', createdAt: atHoursAgo(71), hearts: 6,
+        title: '함께 다듬은 골목 화분',
+        body: '바람에 쓰러진 화분을 이웃 세 분과 일으켜 세웠어요. 다음엔 물 주는 날도 함께 정하기로 했습니다.',
+      },
+      {
+        id: 'example-jeju-3', authorId: 'example-yul', authorName: '율',
+        regionId: '5000000000', createdAt: atHoursAgo(79), hearts: 3,
+        title: '버스 정류장에서 건네받은 귤 한 알',
+        body: '버스를 기다리던 이웃이 갓 딴 귤을 나눠 주셨어요. 서로 이름을 묻고 다음에도 인사하기로 했습니다.',
+      },
     ],
     alerts: [
       { id: 'example-alert-1', read: false, text: '시연 알림이에요. 이웃이 따뜻한 이야기에 공감을 남겼어요.' },

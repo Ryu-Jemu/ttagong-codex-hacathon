@@ -27,8 +27,9 @@ const mapRegions = [...regions].sort((a, b) => a.row - b.row || a.col - b.col)
 
 function scoreBand(score: number | null) {
   if (score === null) return 'missing'
-  if (score < 0.05) return 'low'
-  if (score < 0.1) return 'medium'
+  const displayed = Number(score.toFixed(2))
+  if (displayed < 0.05) return 'low'
+  if (displayed < 0.1) return 'medium'
   return 'high'
 }
 

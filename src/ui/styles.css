@@ -572,11 +572,11 @@ dialog::backdrop { background: rgba(29, 35, 54, .59); }
   .header-content { min-height: 64px; }
   .main-content { padding-block-start: 17px; }
   .hero { grid-template-columns: minmax(0, 1fr); border-radius: 17px; }
-  .hero-copy { padding: 22px 19px 20px; }
-  .hero h1 { font-size: clamp(2.15rem, 8.2vw, 3.55rem); }
+  .hero-copy { padding: 18px 17px 16px; }
+  .hero h1 { font-size: clamp(1.95rem, 7.5vw, 3.15rem); }
   .hero h1 br { display: none; }
   .hero-copy p { margin-block: 8px 14px; }
-  .hero-picture { min-height: 0; aspect-ratio: 2.25; }
+  .hero-picture { min-height: 0; aspect-ratio: 2.9; }
   .desktop-break { display: none; }
   .home-stories, .map-section { margin-block-start: 26px; }
   .story-list { grid-template-columns: minmax(0, 1fr); gap: 10px; }
