@@ -1,0 +1,209 @@
+.music-view {
+  display: grid;
+  gap: clamp(16px, 4vw, 24px);
+  max-inline-size: 940px;
+  margin-inline: auto;
+}
+
+.music-heading h1 {
+  font-size: clamp(2.25rem, 7vw, 4.2rem);
+  font-weight: 740;
+}
+
+.music-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.music-search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 250px;
+  min-inline-size: 0;
+  min-block-size: 46px;
+  gap: 8px;
+  padding-inline: 13px 10px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-field);
+  background: var(--paper);
+  color: var(--muted);
+}
+
+.music-search:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.music-search input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.music-search input:focus-visible { outline: none; box-shadow: none; }
+.music-search input::placeholder { color: var(--muted); }
+
+.music-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.music-filter {
+  min-block-size: 44px;
+  min-inline-size: 52px;
+  padding: 5px 13px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  font-size: .9375rem;
+  font-weight: 650;
+}
+
+.music-filter[aria-pressed="true"] {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--paper);
+  font-weight: 760;
+}
+
+.music-list,
+.music-notes {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.music-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 2.5vw, 17px);
+}
+
+.music-card {
+  --record-label: var(--tint-yellow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  block-size: 100%;
+  padding: clamp(14px, 3.6vw, 22px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-feature);
+  background: var(--record-label);
+}
+
+.music-card[data-mood="위로"] { --record-label: var(--tint-rose); }
+.music-card[data-mood="산책"] { --record-label: var(--tint-mint); }
+
+.music-card-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(12px, 3vw, 18px);
+}
+
+.music-record {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: clamp(72px, 21vw, 104px);
+  aspect-ratio: 1;
+  border: 1px solid #211f27;
+  border-radius: 50%;
+  background: #17151c;
+  box-shadow: 0 6px 13px var(--shadow), inset 0 0 0 3px #26232d;
+}
+
+.music-record::before {
+  position: absolute;
+  inset: 13%;
+  border: 1px solid #4a4450;
+  border-radius: inherit;
+  box-shadow: 0 0 0 4px #24212a, inset 0 0 0 4px #24212a, inset 0 0 0 5px #4a4450;
+  content: '';
+}
+
+.music-record > span {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 35%;
+  aspect-ratio: 1;
+  border: 1px solid var(--control-line);
+  border-radius: inherit;
+  background: var(--record-label);
+}
+
+.music-record > span::after {
+  inline-size: 14%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--action);
+  content: '';
+}
+
+.music-track-info h2 {
+  margin-block: 2px;
+  font-size: clamp(1.3rem, 4.8vw, 1.72rem);
+  font-weight: 760;
+  word-break: keep-all;
+}
+
+.music-track-mood,
+.music-artist,
+.music-note-author,
+.music-composer-track {
+  color: var(--muted);
+  font-size: .875rem;
+  font-weight: 680;
+}
+
+.music-notes {
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.music-notes li + li {
+  padding-block-start: 6px;
+  border-block-start: 1px solid var(--line);
+}
+
+.music-note-author { margin-block-end: 2px; }
+
+.music-card-actions,
+.music-composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.music-card-actions { margin-block-start: auto; }
+.music-listen { text-decoration: none; }
+
+.music-composer {
+  display: grid;
+  gap: 8px;
+}
+
+.music-composer label { font-weight: 750; }
+.music-composer textarea { inline-size: 100%; resize: vertical; }
+.music-empty { padding: 16px; color: var(--muted); }
+
+@media (max-width: 675px) {
+  .music-list { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (hover: none) and (pointer: coarse) and (max-width: 760px) {
+  :root:has(.music-view :is(input, textarea):focus) .bottom-nav { visibility: hidden; }
+}

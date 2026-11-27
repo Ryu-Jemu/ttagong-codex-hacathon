@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
 import { DEMO_AUTHOR, makeDemoState, type DemoState } from './fixtures';
-import { parseModerationResult, validModerationText } from './moderation';
+import { MUSIC_REASON_LIMIT, parseModerationResult, validModerationText } from './moderation';
 import type { DemoController, Draft, ModerationResult, Post } from './types';
 
 const STORAGE_KEY = 'ongi-jido.demo.v1';
+const unavailable = { decision: 'UNAVAILABLE' } as const;
 
 function loadState(): DemoState {
   const initial = makeDemoState();
@@ -14,7 +15,9 @@ function loadState(): DemoState {
     if (saved) {
       const state: DemoState = JSON.parse(saved);
       if (Array.isArray(state.posts) && Array.isArray(state.alerts) && Array.isArray(state.messages)) {
-        return state;
+        const examples = new Map(initial.posts.map((post) => [post.id, post.featuredComment]));
+        const posts = state.posts.map((post) => ({ ...post, featuredComment: post.featuredComment ?? examples.get(post.id) }));
+        return { ...state, posts, recommendations: Array.isArray(state.recommendations) ? state.recommendations : [] };
       }
     }
   } catch {
@@ -45,12 +48,10 @@ export function useDemo(): DemoController {
     return true;
   }
 
-  async function publish(draft: Draft): Promise<ModerationResult> {
-    const unavailable = { decision: 'UNAVAILABLE' } as const;
+  async function reviewAndSave(title: string, body: string, saveApproved: () => boolean,
+    scope?: 'music'): Promise<ModerationResult> {
     if (readOnly || pending.current) return unavailable;
-
-    const { title, body, regionId } = draft;
-    if (!validModerationText(title, body) || !/^\d{10}$/.test(regionId)) return unavailable;
+    if (!validModerationText(title, body)) return unavailable;
 
     const request = new AbortController();
     pending.current = request;
@@ -59,7 +60,7 @@ export function useDemo(): DemoController {
       const response = await fetch('/api/moderate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, body }),
+        body: JSON.stringify({ title, body, scope }),
         signal: request.signal,
       });
       if (!response.ok) return unavailable;
@@ -67,20 +68,33 @@ export function useDemo(): DemoController {
       if (request.signal.aborted) return unavailable;
       if (result.decision !== 'APPROVED') return result;
 
-      const post: Post = {
-        ...DEMO_AUTHOR,
-        id: newId(), title, body, regionId,
-        createdAt: new Date().toISOString(),
-        hearts: 0,
-      };
-      const latest = current.current;
-      return save({ ...latest, posts: [post, ...latest.posts] }) ? result : unavailable;
+      return saveApproved() ? result : unavailable;
     } catch {
       return unavailable;
     } finally {
       window.clearTimeout(timeout);
       if (pending.current === request) pending.current = null;
     }
+  }
+
+  async function publish({ title, body, regionId }: Draft): Promise<ModerationResult> {
+    if (!/^\d{10}$/.test(regionId)) return unavailable;
+
+    return reviewAndSave(title, body, () => {
+      const post: Post = { ...DEMO_AUTHOR, id: newId(), title, body, regionId, createdAt: new Date().toISOString(), hearts: 0 };
+      const latest = current.current;
+      return save({ ...latest, posts: [post, ...latest.posts] });
+    });
+  }
+
+  async function publishRecommendation(trackId: string, title: string, reason: string): Promise<ModerationResult> {
+    if (!/^[a-z0-9-]{1,40}$/.test(trackId) || reason.length > MUSIC_REASON_LIMIT) return unavailable;
+
+    return reviewAndSave(title, reason, () => {
+      const entry = { id: newId(), trackId, authorName: DEMO_AUTHOR.authorName, reason };
+      const latest = current.current;
+      return save({ ...latest, recommendations: [entry, ...latest.recommendations] });
+    }, 'music');
   }
 
   function toggleHeart(id: string) {
@@ -118,5 +132,5 @@ export function useDemo(): DemoController {
     if (save(makeDemoState())) pending.current?.abort();
   }
 
-  return { readOnly, ...state, publish, toggleHeart, readAlert, sendMessage, reset };
+  return { readOnly, ...state, publish, publishRecommendation, toggleHeart, readAlert, sendMessage, reset };
 }

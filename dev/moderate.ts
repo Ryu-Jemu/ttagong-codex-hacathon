@@ -4,7 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Plugin } from 'vite';
-import { parseModerationResult, validModerationText } from '../src/core/moderation';
+import { MUSIC_REASON_LIMIT, parseModerationResult, validModerationText } from '../src/core/moderation';
 import type { ModerationResult } from '../src/core/types';
 
 const UNAVAILABLE = { decision: 'UNAVAILABLE' } as const;
@@ -109,7 +109,7 @@ function runCodex(directory: string, args: string[], prompt: string, signal: Abo
   });
 }
 
-async function review(title: string, body: string, signal: AbortSignal): Promise<ModerationResult> {
+async function review(title: string, body: string, signal: AbortSignal, scope?: 'music'): Promise<ModerationResult> {
   const scratch = await mkdtemp(join(tmpdir(), 'ongi-moderation-'));
   const cwd = join(scratch, 'empty');
   const schemaPath = join(scratch, 'schema.json');
@@ -117,7 +117,10 @@ async function review(title: string, body: string, signal: AbortSignal): Promise
   try {
     await mkdir(cwd);
     await writeFile(schemaPath, JSON.stringify(schema), { mode: 0o600 });
-    const prompt = `${policy}\n\nUNTRUSTED_STORY\n${JSON.stringify({ title, body })}`;
+    const musicPolicy = scope === 'music'
+      ? '\n\nThis submission is a song recommendation. Apply the same safety and tone rules. Also APPROVE / WARM_STORY when the writer shares a concrete comforting, encouraging, joyful, or reflective reason to listen. Approving a recommendation does not vouch for the artist or song. HOLD bare promotion or missing context. Have no need to verify any song or artist.'
+      : '';
+    const prompt = `${policy}${musicPolicy}\n\nUNTRUSTED_STORY\n${JSON.stringify({ title, body })}`;
     const ok = await runCodex(cwd, ['--output-schema', schemaPath, '--output-last-message', resultPath], prompt, signal);
     return ok ? parseModerationResult(JSON.parse(await readFile(resultPath, 'utf8'))) : UNAVAILABLE;
   } finally {
@@ -219,11 +222,14 @@ export function localModeration(): Plugin {
           if (typeof input !== 'object' || input === null || Array.isArray(input)) {
             return respond(res, 400);
           }
-          const { title, body } = input as Record<string, unknown>;
-          if (Object.keys(input).length !== 2 || !validModerationText(title, body)) {
+          const { title, body, scope } = input as Record<string, unknown>;
+          if (!validModerationText(title, body) ||
+              (scope !== undefined && scope !== 'music') ||
+              Object.keys(input).length !== (scope === 'music' ? 3 : 2) ||
+              (scope === 'music' && (body as string).length > MUSIC_REASON_LIMIT)) {
             return respond(res, 400);
           }
-          const result = await review(title as string, body as string, request.signal);
+          const result = await review(title as string, body as string, request.signal, scope);
           respond(res, result.decision === 'UNAVAILABLE' ? 503 : 200, result);
         } catch (error) {
           respond(res, error instanceof RequestError ? error.status : 503);

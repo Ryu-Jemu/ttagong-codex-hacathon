@@ -87,6 +87,13 @@ export function StoryCards({ posts, onOpen, onHeart, empty, home = false }: {
               <div className="home-story-copy">
                 <p className="home-story-byline">{post.authorName}</p>
                 {title}
+                <div className="home-story-interactions">
+                  {post.featuredComment && <p className="home-story-comment">
+                    <Icon name="chat" /><span className="visually-hidden">대표 댓글, {post.featuredComment.authorName}</span>
+                    <span>{post.featuredComment.body}</span>
+                  </p>}
+                  <Heart post={post} onHeart={onHeart ? () => onHeart(post.id) : undefined} />
+                </div>
               </div>
             </> : <>
               <div className="story-meta">

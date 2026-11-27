@@ -8,6 +8,7 @@ export type Post = {
   createdAt: string;
   hearts: number;
   hearted?: boolean;
+  featuredComment?: { authorName: string; body: string };
 };
 
 export type ModerationResult = {
@@ -16,6 +17,7 @@ export type ModerationResult = {
 };
 
 export type Draft = { title: string; body: string; regionId: string };
+export type MusicRecommendation = { id: string; trackId: string; authorName: string; reason: string };
 export type DemoAlert = { id: string; text: string; read: boolean };
 export type DemoMessage = { id: string; text: string; mine: boolean };
 
@@ -24,7 +26,9 @@ export type DemoController = {
   posts: Post[];
   alerts: DemoAlert[];
   messages: DemoMessage[];
+  recommendations: MusicRecommendation[];
   publish(draft: Draft): Promise<ModerationResult>;
+  publishRecommendation(trackId: string, title: string, reason: string): Promise<ModerationResult>;
   toggleHeart(id: string): void;
   readAlert(id: string): void;
   sendMessage(text: string): void;

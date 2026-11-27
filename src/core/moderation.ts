@@ -2,6 +2,7 @@ import type { ModerationResult } from './types';
 
 export const TITLE_LIMIT = 100;
 export const BODY_LIMIT = 1_000;
+export const MUSIC_REASON_LIMIT = 500;
 
 export function validModerationText(title: unknown, body: unknown): boolean {
   return (

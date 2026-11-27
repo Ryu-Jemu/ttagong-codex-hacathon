@@ -7,6 +7,7 @@ import { getWarmth, regions } from '../regions'
 import { Composer } from './Composer'
 import type { Draft, Review } from './Composer'
 import { Icon } from './Icon'
+import Music from './Music'
 import { Heart, newestFirst, popularStories, StoryCards, StoryDate, storyRegion } from './Story'
 import './styles.css'
 import './home.css'
@@ -16,15 +17,17 @@ const tabs = [
   { id: 'home', label: '홈', icon: 'home' },
   { id: 'alerts', label: '알림', icon: 'bell' },
   { id: 'profile', label: '프로필', icon: 'profile' },
-  { id: 'regions', label: '지역별 소식', icon: 'map' },
+  { id: 'music', label: '노래 추천', icon: 'music' },
   { id: 'messages', label: '대화', icon: 'chat' },
 ] as const
 
 type Tab = typeof tabs[number]['id']
-type Screen = { kind: 'tab' | 'compose' | 'thread' } | { kind: 'alert'; id: string }
+type MapView = 'boundaries' | 'grid'
+type Screen = { kind: 'tab' | 'compose' | 'thread' | 'region' } | { kind: 'alert'; id: string }
 
 const blankDraft = { title: '', body: '', regionId: '' }
 const motionPreferenceKey = 'ttagong.settings.reduce-motion'
+const regionPreferenceKey = 'ttagong.settings.region'
 const warmthNumber = new Intl.NumberFormat('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const mapRegions = [...regions].sort((a, b) => a.row - b.row || a.col - b.col)
 
@@ -36,6 +39,15 @@ function loadMotionPreference() {
   }
 }
 
+function loadRegionPreference() {
+  try {
+    const savedId = window.localStorage.getItem(regionPreferenceKey)
+    return regions.find((region) => region.id === savedId)?.id ?? ''
+  } catch {
+    return ''
+  }
+}
+
 function scoreBand(score: number | null) {
   if (score === null) return 'missing'
   const displayed = Number(score.toFixed(2))
@@ -44,36 +56,85 @@ function scoreBand(score: number | null) {
   return 'high'
 }
 
-function RegionMap({ posts, onRegion, updatedRegionId }: {
+function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, setView }: {
   posts: readonly Post[]
   onRegion: (id: string) => void
   updatedRegionId: string | undefined
+  followedRegionId: string
+  view: MapView
+  setView: (view: MapView) => void
 }) {
+  const mapSurface = useRef<HTMLDivElement>(null)
+  const [Boundaries, setBoundaries] = useState<typeof import('./BoundaryMap').default>()
+  const [boundaryLoadFailed, setBoundaryLoadFailed] = useState(false)
   const now = new Date()
+  const entries = mapRegions.map((region) => {
+    const { score, authors } = getWarmth(posts, region, now)
+    const value = score === null ? '표본 부족' : warmthNumber.format(score)
+    const spokenScore = score === null ? `${value}, 작성자 ${authors}명` : `인구 10만 명당 ${value}건`
+    const followed = region.id === followedRegionId
+    return {
+      ...region, value, followed, band: scoreBand(score), updated: region.id === updatedRegionId,
+      label: `${region.name}, ${spokenScore}${followed ? ', 관심 지역으로 저장됨' : ''}, 지역 소식 보기`,
+    }
+  })
+
+  useEffect(() => {
+    if (view === 'grid' || Boundaries || boundaryLoadFailed) return
+
+    let active = true
+    const load = () => {
+      import('./BoundaryMap').then(({ default: map }) => {
+        if (active) setBoundaries(() => map)
+      }).catch(() => {
+        if (active) setBoundaryLoadFailed(true)
+      })
+    }
+    const surface = mapSurface.current
+    if (!surface || typeof IntersectionObserver === 'undefined') {
+      load()
+      return () => { active = false }
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        observer.disconnect()
+        load()
+      }
+    }, { rootMargin: '120px' })
+    observer.observe(surface)
+    return () => { active = false; observer.disconnect() }
+  }, [view, Boundaries, boundaryLoadFailed])
 
   return (
     <section className="map-section" aria-labelledby="warmth-title">
-      <div className="section-heading">
-        <h2 id="warmth-title">지역별 온기지도</h2>
-        <p className="map-unit">최근 7일 · 인구 10만 명당</p>
-      </div>
-      <div className="map-surface">
-        <div className="map-grid" role="group" aria-label="16개 광역 지역 지도">
-          {mapRegions.map((region) => {
-            const { score, authors } = getWarmth(posts, region, now)
-            const value = score === null ? '표본 부족' : warmthNumber.format(score)
-            const spokenScore = score === null ? `${value}, 작성자 ${authors}명` : `인구 10만 명당 ${value}건`
-            return (
-              <button type="button" className="map-tile" key={region.id}
-                data-band={scoreBand(score)} data-updated={region.id === updatedRegionId}
-                style={{ gridColumn: region.col, gridRow: region.row }}
-                aria-label={`${region.name}, ${spokenScore}, 지역 소식 보기`}
-                onClick={() => onRegion(region.id)}>
-                <strong>{region.shortName}</strong><span>{value}</span>
-              </button>
-            )
-          })}
+      <div className="section-heading section-with-control">
+        <div>
+          <h2 id="warmth-title">지역별 온기지도</h2>
+          <p className="map-unit">최근 7일 · 인구 10만 명당</p>
         </div>
+        <div className="segmented-control map-mode" role="group" aria-label="지도 표시 방식">
+          <button type="button" aria-pressed={view === 'boundaries'} onClick={() => setView('boundaries')}>행정구역</button>
+          <button type="button" aria-pressed={view === 'grid'} onClick={() => setView('grid')}>격자</button>
+        </div>
+      </div>
+      <div ref={mapSurface} className="map-surface">
+        {view === 'grid'
+          ? <div className="map-grid" role="group" aria-label="16개 광역 지역 격자 지도">
+              {entries.map((region) => (
+                <button type="button" className="map-tile" key={region.id}
+                  data-band={region.band} data-updated={region.updated} data-followed={region.followed || undefined}
+                  style={{ gridColumn: region.col, gridRow: region.row }} aria-label={region.label}
+                  onClick={() => onRegion(region.id)}>
+                  <strong>{region.shortName}</strong><span>{region.value}</span>
+                </button>
+              ))}
+            </div>
+          : Boundaries
+            ? <Boundaries entries={entries} onRegion={onRegion} />
+            : <div className="boundary-placeholder" role="status">
+                {boundaryLoadFailed ? '행정 경계를 불러오지 못했어요. 격자에서 지역을 선택할 수 있어요.' : '행정구역 지도 불러오는 중'}
+              </div>}
         <details className="map-guide">
           <summary><Icon name="info" />온기 수치 읽는 법<Icon name="down" /></summary>
           <p>시연에 게시된 최근 7일(오늘 포함, 한국 시간)의 이야기를 인구 10만 명당 건수로 표시합니다.</p>
@@ -85,7 +146,7 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
             <li><i aria-hidden="true" />표본 부족</li>
           </ul>
           <p>인구 기준 · 행정안전부 주민등록 인구통계, 2026년 10월</p>
-          <p>타일 배치 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS 행정구역 경계</p>
+          <p>행정 경계·격자 배치 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS</p>
         </details>
       </div>
     </section>
@@ -96,15 +157,20 @@ export default function App() {
   const demo = useDemo()
   const [tab, setTab] = useState<Tab>('home')
   const [screen, setScreen] = useState<Screen>({ kind: 'tab' })
-  const [regionId, setRegionId] = useState('')
+  const [followedRegionId, setFollowedRegionId] = useState(loadRegionPreference)
+  const [regionId, setRegionId] = useState(followedRegionId)
+  const [regionPreferenceStatus, setRegionPreferenceStatus] = useState('')
   const [storyId, setStoryId] = useState<string | null>(null)
   const [sort, setSort] = useState<'recent' | 'popular'>('recent')
+  const [mapView, setMapView] = useState<MapView>('boundaries')
   const [motionReduced, setMotionReduced] = useState(loadMotionPreference)
+  const [musicReset, setMusicReset] = useState(0)
   const [draft, setDraft] = useState<Draft>(blankDraft)
   const [review, setReview] = useState<Review | null>(null)
   const [message, setMessage] = useState('')
   const [resetStatus, setResetStatus] = useState('')
   const publishing = useRef(false)
+  const composingFromRegion = useRef(false)
   const heading = useRef<HTMLHeadingElement>(null)
   const resetDialog = useRef<HTMLDialogElement>(null)
   const storyDialog = useRef<HTMLDialogElement>(null)
@@ -135,6 +201,7 @@ export default function App() {
   }, [storyId])
 
   const region = regions.find((item) => item.id === regionId)
+  const followedRegion = regions.find((item) => item.id === followedRegionId)
   const regionWarmth = region && getWarmth(demo.posts, region)
   const latest = [...demo.posts].sort(newestFirst)
   const homePosts = (sort === 'recent' ? latest : popularStories(demo.posts)).slice(0, 3)
@@ -146,7 +213,7 @@ export default function App() {
     if (screen.kind === 'tab') tabScroll.current[tab] = window.scrollY
   }
 
-  function navigate(nextTab: Tab, resetPosition = false) {
+  function navigate(nextTab: Tab) {
     if (tab === nextTab && screen.kind === 'tab') {
       window.scrollTo(0, 0)
       heading.current?.focus({ preventScroll: true })
@@ -154,23 +221,50 @@ export default function App() {
     }
 
     rememberTabScroll()
-    nextScroll.current = resetPosition ? 0 : (tabScroll.current[nextTab] ?? 0)
+    nextScroll.current = tabScroll.current[nextTab] ?? 0
     setTab(nextTab)
     setScreen({ kind: 'tab' })
   }
 
   function openRegion(id: string) {
     setRegionId(id)
-    navigate('regions', true)
+    if (screen.kind === 'region') {
+      window.scrollTo(0, 0)
+      heading.current?.focus({ preventScroll: true })
+      return
+    }
+
+    rememberTabScroll()
+    setScreen({ kind: 'region' })
+  }
+
+  function toggleRegionPreference() {
+    if (!region) return
+    const next = followedRegionId === region.id ? '' : region.id
+    setFollowedRegionId(next)
+
+    try {
+      if (next) window.localStorage.setItem(regionPreferenceKey, next)
+      else window.localStorage.removeItem(regionPreferenceKey)
+      setRegionPreferenceStatus('')
+    } catch {
+      setRegionPreferenceStatus('브라우저에 저장할 수 없어 이번 방문에만 적용됩니다.')
+    }
   }
 
   function openComposer() {
     if (demo.readOnly) return
-    if (tab === 'regions' && region && !draft.regionId) {
+    composingFromRegion.current = screen.kind === 'region'
+    if (composingFromRegion.current && region && !draft.regionId) {
       setDraft((current) => ({ ...current, regionId: region.id }))
     }
     rememberTabScroll()
     setScreen({ kind: 'compose' })
+  }
+
+  function closeComposer() {
+    if (composingFromRegion.current) setScreen({ kind: 'region' })
+    else navigate(tab)
   }
 
   function changeDraft(field: keyof Draft, value: string) {
@@ -207,6 +301,7 @@ export default function App() {
   function resetDemo() {
     if (demo.readOnly || publishing.current) return
     demo.reset()
+    setMusicReset((value) => value + 1)
     setDraft(blankDraft)
     setReview(null)
     setMessage('')
@@ -246,8 +341,8 @@ export default function App() {
     onHeart: demo.readOnly ? undefined : demo.toggleHeart,
   }
 
-  const back = (label: string) => (
-    <button type="button" className="back-link" onClick={() => navigate(tab)}>
+  const back = (label: string, onClick = () => navigate(tab)) => (
+    <button type="button" className="back-link" onClick={onClick}>
       <Icon name="back" />{label}
     </button>
   )
@@ -263,7 +358,7 @@ export default function App() {
           </button>
           {demo.readOnly
             ? <span className="mode"><Icon name="lock" />읽기 전용 시연</span>
-            : <button type="button" className="button button-primary header-write" onClick={openComposer}>
+            : (tab !== 'music' || screen.kind !== 'tab') && <button type="button" className="button button-primary header-write" onClick={openComposer}>
               <Icon name="edit" /> 글쓰기
             </button>}
         </div>
@@ -275,6 +370,10 @@ export default function App() {
             <div className="home-overview">
               <section className="hero" aria-labelledby="hero-title">
                 <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
+                {followedRegion && <button type="button" className="home-region-link"
+                  onClick={() => openRegion(followedRegion.id)}>
+                  <Icon name="pin" />{followedRegion.shortName} 소식
+                </button>}
                 <figure className="hero-picture">
                   <img src="/neighborhood-books.jpg" width="1120" height="746" fetchPriority="high"
                     alt="비 온 뒤 동네 책방 앞에서 함께 책을 정리하는 이웃" />
@@ -295,13 +394,14 @@ export default function App() {
                   empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
               </section>
             </div>
-            <RegionMap posts={demo.posts} onRegion={openRegion}
+            <RegionMap posts={demo.posts} onRegion={openRegion} followedRegionId={followedRegionId} view={mapView} setView={setMapView}
               updatedRegionId={review?.decision === 'APPROVED' ? review.regionId : undefined} />
           </>
         )}
 
-        {screen.kind === 'tab' && tab === 'regions' && (
+        {screen.kind === 'region' && (
           <>
+            {back(tab === 'home' ? '홈' : '이전 화면')}
             <div className="page-heading">
               <h1 ref={heading} tabIndex={-1}>지역별 소식</h1>
             </div>
@@ -311,7 +411,12 @@ export default function App() {
                 <option value="">전체 지역</option>
                 {regions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
               </select>
+              {region && <button type="button" className="button button-outline region-preference-button"
+                aria-pressed={region.id === followedRegionId} onClick={toggleRegionPreference}>
+                {region.id === followedRegionId ? '관심 지역 해제' : '관심 지역 저장'}
+              </button>}
             </div>
+            <p className="region-preference-status" role="status">{regionPreferenceStatus}</p>
             {regionWarmth && <p className="region-stats">
               최근 7일 집계 {regionWarmth.count}건 · 작성자 {regionWarmth.authors}명 · {regionWarmth.score === null
                 ? '표본 부족'
@@ -327,9 +432,13 @@ export default function App() {
           </>
         )}
 
+        <Music key={musicReset} heading={heading} active={screen.kind === 'tab' && tab === 'music'}
+          readOnly={demo.readOnly} recommendations={demo.recommendations}
+          onRecommend={(track, reason) => demo.publishRecommendation(track.id, `${track.title} · ${track.artist}`, reason)} />
+
         {screen.kind === 'compose' && !demo.readOnly && (
           <>
-            {back(tab === 'regions' ? '지역별 소식' : '이전 화면')}
+            {back(composingFromRegion.current ? '지역별 소식' : '이전 화면', closeComposer)}
             <div className="page-heading">
               <h1 ref={heading} tabIndex={-1}>이야기 쓰기</h1>
             </div>
@@ -455,6 +564,9 @@ export default function App() {
             {selectedPost && <>
               <p className="story-detail-author">{selectedPost.authorName}</p>
               <p className="story-body">{selectedPost.body}</p>
+              {selectedPost.featuredComment && <aside className="story-featured-comment" aria-label="대표 댓글">
+                <Icon name="chat" /><div><strong>{selectedPost.featuredComment.authorName}</strong><p>{selectedPost.featuredComment.body}</p></div>
+              </aside>}
               <div className="story-actions">
                 <Heart post={selectedPost} onHeart={demo.readOnly ? undefined : () => demo.toggleHeart(selectedPost.id)} />
                 <button type="button" className="button button-outline" onClick={() => openStoryRegion(selectedPost.regionId)}>
