@@ -44,10 +44,9 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
     <section className="map-section" aria-labelledby="warmth-title">
       <div className="section-heading">
         <h2 id="warmth-title" tabIndex={-1}>지역별 온기지도</h2>
-        <p>지역을 선택해 이웃의 이야기를 읽어 보세요.</p>
       </div>
       <div className="map-surface">
-        <div className="map-grid" role="group" aria-label="16개 광역 지역 지도" aria-describedby="map-guide">
+        <div className="map-grid" role="group" aria-label="16개 광역 지역 지도">
           {mapRegions.map((region) => {
             const { score, authors } = getWarmth(posts, region, now)
             const value = score === null ? '표본 부족' : warmthNumber.format(score)
@@ -63,10 +62,10 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
             )
           })}
         </div>
-        <div className="map-guide" id="map-guide">
-          <h3><Icon name="info" />온기 수치 읽는 법</h3>
-          <p>오늘을 포함한 최근 7일(한국 시간)에 게시된 이야기를 인구 10만 명당 건수로 표시합니다.</p>
-          <p>한 지역에서 같은 작성자의 글은 하루에 한 건으로 셉니다. 작성자가 3명 미만이면 표본 부족으로 표시합니다.</p>
+        <details className="map-guide">
+          <summary><Icon name="info" />온기 수치 읽는 법<Icon name="down" /></summary>
+          <p>시연에 게시된 최근 7일(오늘 포함, 한국 시간)의 이야기를 인구 10만 명당 건수로 표시합니다.</p>
+          <p>같은 지역·작성자의 글은 하루 한 건으로 셉니다. 작성자가 3명 미만이면 표본 부족입니다.</p>
           <ul className="map-key" aria-label="온기 수치 범례">
             <li><i aria-hidden="true" data-band="low" />0.05 미만</li>
             <li><i aria-hidden="true" data-band="medium" />0.05 이상 0.10 미만</li>
@@ -74,7 +73,7 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
             <li><i aria-hidden="true" />표본 부족</li>
           </ul>
           <p>인구 기준 · 행정안전부 주민등록 인구통계, 2026년 10월</p>
-        </div>
+        </details>
       </div>
     </section>
   )
@@ -193,9 +192,9 @@ export default function App() {
       <a className="skip-link" href="#main-content">본문 바로가기</a>
       <header className="site-header">
         <div className="header-content">
-          <button type="button" className="wordmark" onClick={() => navigate('home')} aria-label="daily_warming 홈">
-            <span className="brand-mark"><Icon name="pin" /></span>
-            <span>daily_warming</span>
+          <button type="button" className="wordmark" onClick={() => navigate('home')} aria-label="따공 홈">
+            <span className="brand-mark"><Icon name="brand" /></span>
+            <span>따공</span>
           </button>
           {demo.readOnly
             ? <span className="mode"><Icon name="lock" />읽기 전용 시연</span>
@@ -210,8 +209,7 @@ export default function App() {
           <>
             <section className="hero" aria-labelledby="hero-title">
               <div className="hero-copy">
-                <h1 id="hero-title" ref={heading} tabIndex={-1}>이웃의 온기를 <br />지도에 담아요</h1>
-                <p>도움을 주고받고, 함께 일어선 순간들.<br className="desktop-break" /> 우리 동네의 따뜻한 이야기를 만나 보세요.</p>
+                <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
                 <button type="button" className="button button-accent" onClick={jumpToMap}>
                   지역 지도 보기<Icon name="down" />
                 </button>
@@ -244,7 +242,6 @@ export default function App() {
           <>
             <div className="page-heading">
               <h1 ref={heading} tabIndex={-1}>지역별 소식</h1>
-              <p>일이 있었던 지역에서 이야기를 찾아 보세요.</p>
             </div>
             <div className="filter-bar">
               <label htmlFor="filter-region">지역</label>
@@ -298,7 +295,7 @@ export default function App() {
 
         {screen.kind === 'tab' && tab === 'alerts' && (
           <>
-            <div className="page-heading"><h1 ref={heading} tabIndex={-1}>알림</h1><p>시연용 예시 알림을 확인할 수 있습니다.</p></div>
+            <div className="page-heading"><h1 ref={heading} tabIndex={-1}>알림</h1></div>
             {demo.alerts.length ? (
               <ul className="item-list">
                 {demo.alerts.map((alert) => (
@@ -334,7 +331,7 @@ export default function App() {
             <div className="page-heading"><h1 ref={heading} tabIndex={-1}>프로필</h1></div>
             <section className="surface narrow-surface profile-card" aria-labelledby="profile-title">
               <span className="item-icon"><Icon name="profile" /></span>
-              <div><h2 id="profile-title">{DEMO_AUTHOR.authorName}</h2><p>시연 프로필</p></div>
+              <div><h2 id="profile-title">따공 이웃</h2><p>시연 프로필</p></div>
             </section>
             <section className="profile-stories" aria-labelledby="profile-stories-title">
               <div className="section-heading"><h2 id="profile-stories-title">내가 쓴 이야기</h2></div>
@@ -363,7 +360,7 @@ export default function App() {
 
         {screen.kind === 'tab' && tab === 'messages' && (
           <>
-            <div className="page-heading"><h1 ref={heading} tabIndex={-1}>대화</h1><p>이웃과 주고받은 시연용 대화입니다.</p></div>
+            <div className="page-heading"><h1 ref={heading} tabIndex={-1}>대화</h1></div>
             <button type="button" className="item-row thread-link" onClick={() => setScreen({ kind: 'thread' })}>
               <span className="item-icon"><Icon name="chat" /></span>
               <span><strong>이웃과의 예시 대화</strong>{demo.messages.at(-1) && <small>{demo.messages.at(-1)?.text}</small>}</span>
