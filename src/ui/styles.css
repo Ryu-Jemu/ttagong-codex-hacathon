@@ -4,6 +4,8 @@
   --page: #f7f6fa;
   --muted: #5b5665;
   --accent: #214bc6;
+  --heart-red: #ad1e43;
+  --heart-soft: #fce9ef;
   --paper: #fff;
   --line: #e2dfe8;
   --accent-soft: #eaf0ff;
@@ -286,7 +288,9 @@ img { display: block; max-inline-size: 100%; }
   font-weight: 750;
   font-size: .875rem;
 }
-button.heart[aria-pressed="true"] { border-color: var(--control-line); background: var(--accent-soft); }
+.heart svg,
+[data-alert-kind="like"] .item-icon svg { color: var(--heart-red); }
+button.heart[aria-pressed="true"] { border-color: var(--heart-red); background: var(--heart-soft); }
 span.heart { pointer-events: none; }
 .empty-state { padding: 24px 18px; color: var(--muted); }
 

@@ -240,6 +240,11 @@
   color: var(--ink);
 }
 
+.profile-badge-card[data-badge="first-heart"][data-earned="true"] .profile-badge-icon {
+  background: var(--heart-soft);
+  color: var(--heart-red);
+}
+
 .profile-badge-card h3 { font-size: 1.04rem; }
 .profile-badge-card p { margin: 0; color: var(--muted); font-size: .875rem; }
 

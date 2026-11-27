@@ -123,7 +123,7 @@ export default function Profile({
         <div className="section-heading"><h2 id="profile-badges-title">배지</h2></div>
         <ul className="profile-badge-grid" role="list">
           {badges.map((badge) => (
-            <li className="surface profile-badge-card" key={badge.id} data-earned={badge.earned}>
+            <li className="surface profile-badge-card" key={badge.id} data-badge={badge.id} data-earned={badge.earned}>
               <div className="profile-badge-state">
                 <span className="profile-badge-icon"><Icon name={badgeIcons[badge.id]} /></span>
                 <span>{badge.earned ? '획득' : '잠김'}</span>
