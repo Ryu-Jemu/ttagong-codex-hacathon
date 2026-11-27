@@ -24,8 +24,10 @@ const positions = new Map(Array.from(source.querySelectorAll('text[x][y]'), (lab
 const labelOffsets: Readonly<Record<string, readonly [number, number]>> = {
   서울: [-12, 0],
   인천: [-47, 5],
+  충북: [32, -20],
   세종: [10, 0],
-  대전: [41, 31],
+  대전: [41, 55],
+  울산: [16, -27],
 }
 
 export default function BoundaryMap({ entries, onRegion }: {
