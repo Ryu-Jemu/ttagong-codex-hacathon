@@ -163,6 +163,7 @@ export default function App() {
   const storyDialog = useRef<HTMLDialogElement>(null)
   const storyClose = useRef<HTMLButtonElement>(null)
   const storyOpener = useRef<HTMLButtonElement>(null)
+  const threadLimit = useRef<HTMLParagraphElement>(null)
   const activeTab = useRef<HTMLButtonElement>(null)
   const tabScroll = useRef<Partial<Record<Tab, number>>>({})
   const nextScroll = useRef(0)
@@ -197,6 +198,10 @@ export default function App() {
   const unread = demo.alerts.filter((alert) => !alert.read).length
   const visibleMessages = demo.messages.slice(-DEMO_MESSAGE_LIMIT)
   const chatFull = demo.messages.length >= DEMO_MESSAGE_LIMIT
+
+  useLayoutEffect(() => {
+    if (chatFull) threadLimit.current?.focus()
+  }, [chatFull])
 
   function rememberTabScroll() {
     if (screen.kind === 'tab') tabScroll.current[tab] = window.scrollY
@@ -526,7 +531,7 @@ export default function App() {
                 </li>)}
               </ol> : <p className="empty-state">아직 대화가 없습니다.</p>}
               {!demo.readOnly && (chatFull
-                ? <p className="thread-limit" role="status">시연 메시지 {DEMO_MESSAGE_LIMIT}개를 모두 표시했어요.</p>
+                ? <p className="thread-limit" ref={threadLimit} tabIndex={-1} role="status">시연 메시지 {DEMO_MESSAGE_LIMIT}개를 모두 표시했어요.</p>
                 : (
                 <form className="message-form" onSubmit={submitMessage}>
                   <label className="visually-hidden" htmlFor="message-text">예시 메시지</label>
