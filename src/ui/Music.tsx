@@ -89,7 +89,7 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
   const [review, setReview] = useState<Review | null>(null)
   const [artwork, setArtwork] = useState(loadArtwork)
   const [editing, setEditing] = useState<CatalogTrack | null>(null)
-  const [artworkStatus, setArtworkStatus] = useState('')
+  const [artworkStatus, setArtworkStatus] = useState<{ trackId: string; message: string }>()
   const searchInput = useRef<HTMLInputElement>(null)
   const reasonInput = useRef<HTMLTextAreaElement>(null)
   const composerOpener = useRef<HTMLButtonElement>(null)
@@ -161,12 +161,13 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
         defaultArtwork={editing.artwork} onSave={(next) => {
           const designs = { ...artwork, [editing.id]: next }
           setArtwork(designs)
-          setArtworkStatus(saveArtwork(designs) ? `${editing.title} LP 디자인 저장 완료` : '이번 방문에만 LP 디자인이 적용됩니다.')
+          setArtworkStatus({ trackId: editing.id, message: saveArtwork(designs)
+            ? 'LP 디자인을 이 브라우저에 저장했어요.' : '이번 방문에만 LP 디자인이 적용됩니다.' })
         }} onClose={() => {
           setEditing(null)
           artworkOpener.current?.focus()
         }} />}
-      <p className="visually-hidden" role="status">{artworkStatus}</p>
+      <p className="visually-hidden" role="status">{artworkStatus?.message}</p>
 
       <div className="music-tools">
         <div className="music-search">
@@ -250,7 +251,7 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
                   <button type="button" className="button button-outline" aria-haspopup="dialog"
                     aria-label={`${track.title} LP 꾸미기`} onClick={(event) => {
                       artworkOpener.current = event.currentTarget
-                      setArtworkStatus('')
+                      setArtworkStatus(undefined)
                       setEditing(track)
                     }}>LP 꾸미기</button>
                   {!readOnly && <button type="button" className="button button-outline"
@@ -259,6 +260,7 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
                     aria-controls={draftTrack?.id === track.id ? 'music-composer' : undefined}
                     onClick={(event) => openComposer(track, event.currentTarget)}>추천 글 쓰기</button>}
                 </div>
+                {artworkStatus?.trackId === track.id && <p className="record-storage-note" aria-hidden="true">{artworkStatus.message}</p>}
               </article>
             </li>
           ))}

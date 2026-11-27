@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useDemo } from '../core/demo'
-import { DEMO_AUTHOR } from '../core/fixtures'
+import { DEMO_AUTHOR, DEMO_MESSAGE_LIMIT } from '../core/fixtures'
 import type { ModerationResult, Post } from '../core/types'
 import { getWarmth, regions, STORY_WARMTH_POINTS } from '../regions'
 import { Composer } from './Composer'
@@ -195,6 +195,8 @@ export default function App() {
   const selectedPost = storyId ? demo.posts.find((post) => post.id === storyId) : undefined
   const selectedAlert = screen.kind === 'alert' ? demo.alerts.find((alert) => alert.id === screen.id) : undefined
   const unread = demo.alerts.filter((alert) => !alert.read).length
+  const visibleMessages = demo.messages.slice(-DEMO_MESSAGE_LIMIT)
+  const chatFull = demo.messages.length >= DEMO_MESSAGE_LIMIT
 
   function rememberTabScroll() {
     if (screen.kind === 'tab') tabScroll.current[tab] = window.scrollY
@@ -280,7 +282,7 @@ export default function App() {
 
   function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (demo.readOnly || !message.trim()) return
+    if (demo.readOnly || chatFull || !message.trim()) return
     demo.sendMessage(message.trim())
     setMessage('')
   }
@@ -356,7 +358,7 @@ export default function App() {
           <>
             <div className="home-overview">
               <section className="hero" aria-labelledby="hero-title">
-                <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
+                <h1 id="hero-title" ref={heading} tabIndex={-1}>작은 친절을 나눠요</h1>
                 {followedRegion && <button type="button" className="home-region-link"
                   onClick={() => openRegion(followedRegion.id)}>
                   <Icon name="pin" />{followedRegion.shortName} 소식
@@ -518,19 +520,21 @@ export default function App() {
             {back('대화 목록')}
             <section className="surface narrow-surface" aria-labelledby="thread-title">
               <h1 id="thread-title" ref={heading} tabIndex={-1}>이웃과의 예시 대화</h1>
-              {demo.messages.length ? <ol className="message-list" aria-live="polite">
-                {demo.messages.map((entry) => <li key={entry.id} className={entry.mine ? 'mine' : ''}>
+              {visibleMessages.length ? <ol className="message-list" aria-label="예시 메시지">
+                {visibleMessages.map((entry) => <li key={entry.id} className={entry.mine ? 'mine' : ''}>
                   <span>{entry.mine ? '나' : '이웃'}</span><p>{entry.text}</p>
                 </li>)}
               </ol> : <p className="empty-state">아직 대화가 없습니다.</p>}
-              {!demo.readOnly && (
+              {!demo.readOnly && (chatFull
+                ? <p className="thread-limit" role="status">시연 메시지 {DEMO_MESSAGE_LIMIT}개를 모두 표시했어요.</p>
+                : (
                 <form className="message-form" onSubmit={submitMessage}>
                   <label className="visually-hidden" htmlFor="message-text">예시 메시지</label>
                   <input id="message-text" value={message} onChange={(event) => setMessage(event.target.value)}
                     required placeholder="예시 메시지 입력" />
                   <button className="button button-primary" type="submit" disabled={!message.trim()}>보내기</button>
                 </form>
-              )}
+                ))}
             </section>
           </>
         )}

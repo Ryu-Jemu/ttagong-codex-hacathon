@@ -1,6 +1,7 @@
 import type { DemoAlert, DemoMessage, MusicRecommendation, Post } from './types';
 
 export const DEMO_AUTHOR = { authorId: 'demo-you', authorName: '따공 이웃' };
+export const DEMO_MESSAGE_LIMIT = 7;
 
 export type DemoState = {
   posts: Post[];
@@ -13,7 +14,16 @@ export function makeDemoState(now = Date.now()): DemoState {
   const atHoursAgo = (hours: number) => new Date(now - hours * 3_600_000).toISOString();
 
   return {
-    recommendations: [],
+    recommendations: [
+      {
+        id: 'example-recommendation-walk', trackId: 'walk', authorName: DEMO_AUTHOR.authorName,
+        reason: '비가 그친 부산 바닷길을 이웃과 천천히 걸을 때 듣고 싶은 곡이에요.',
+      },
+      {
+        id: 'example-recommendation-day6', trackId: 'time-of-our-life', authorName: DEMO_AUTHOR.authorName,
+        reason: '대전 책방에서 함께 상자를 정리한 날, 수고했다고 말하며 이 노래를 나누고 싶었어요.',
+      },
+    ],
     posts: [
       {
         id: 'example-seoul-1', authorId: 'example-jiu', authorName: '지우',
@@ -74,14 +84,38 @@ export function makeDemoState(now = Date.now()): DemoState {
         title: '버스 정류장에서 건네받은 귤 한 알',
         body: '버스를 기다리던 이웃이 갓 딴 귤을 나눠 주셨어요. 서로 이름을 묻고 다음에도 인사하기로 했습니다.',
       },
+      {
+        id: 'example-you-busan', ...DEMO_AUTHOR,
+        regionId: '2600000000', createdAt: atHoursAgo(216), hearts: 4,
+        title: '골목 화분을 처마 아래로 옮겼어요',
+        body: '비바람에 화분이 넘어질까 걱정이었는데 옆 가게 이웃이 나와 함께 옮겨 주셨어요. 비가 그치면 바닷길로 같이 산책 가기로 했어요.',
+      },
+      {
+        id: 'example-you-daejeon', ...DEMO_AUTHOR,
+        regionId: '3000000000', createdAt: atHoursAgo(288), hearts: 3,
+        title: '책방 앞에서 상자를 함께 날랐어요',
+        body: '비를 피할 수 있게 책이 든 상자를 가게 안으로 옮겼어요. 정리를 끝내고 이웃들과 따뜻한 차를 한 잔 나눴습니다.',
+      },
+      {
+        id: 'example-you-jeju', ...DEMO_AUTHOR,
+        regionId: '5000000000', createdAt: atHoursAgo(384), hearts: 2,
+        title: '산책길에서 잃어버린 모자를 돌려 드렸어요',
+        body: '바람에 날린 모자가 제 발 앞에 멈췄어요. 앞서 걷던 분을 불러 건네드렸더니, 어디서 바다가 잘 보이는지도 알려 주셨어요.',
+      },
     ],
     alerts: [
-      { id: 'example-alert-1', read: false, text: '시연 알림이에요. 이웃이 따뜻한 이야기에 공감을 남겼어요.' },
-      { id: 'example-alert-2', read: true, text: '지역별 소식에서 다른 동네의 이야기도 만나 보세요.' },
+      { id: 'example-alert-1', read: false, text: '소담님이 ‘골목 화분을 처마 아래로 옮겼어요’에 공감을 남겼어요.' },
+      { id: 'example-alert-3', read: false, text: '이웃이 산책 얘기를 보냈어요. 대화에서 답장을 읽어 보세요.' },
+      { id: 'example-alert-4', read: true, text: '‘한 페이지가 될 수 있게’에 남긴 내 추천을 노래 추천에서 다시 읽을 수 있어요.' },
+      { id: 'example-alert-2', read: true, text: '제주 소식에 ‘버스 정류장에서 건네받은 귤 한 알’이 올라왔어요.' },
     ],
     messages: [
       { id: 'example-message-1', mine: false, text: '안녕하세요! 어제 함께 정리해 주셔서 고마웠어요.' },
       { id: 'example-message-2', mine: true, text: '저도 덕분에 힘이 났어요. 다음에 또 만나요!' },
+      { id: 'example-message-3', mine: false, text: '처마 밑으로 옮긴 화분은 밤새 무사했어요.' },
+      { id: 'example-message-4', mine: true, text: '다행이에요. 비가 그치면 바닷길도 같이 걸어요.' },
+      { id: 'example-message-5', mine: false, text: '좋아요. 걸으면서 백예린의 ‘산책’을 듣고 싶어요.' },
+      { id: 'example-message-6', mine: true, text: '저도 그 곡 추천 글을 남겼어요. 느긋하게 걷기에 잘 어울려요.' },
     ],
   };
 }

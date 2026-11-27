@@ -48,11 +48,12 @@ export function Composer({ draft, review, onChange, onSubmit, onRegion }: {
           placeholder="글 제목"
           onChange={(event) => onChange('title', event.target.value)} />
         <label htmlFor="story-region">일이 있었던 지역</label>
-        <select id="story-region" required value={draft.regionId}
+        <select id="story-region" aria-describedby="region-point-help" required value={draft.regionId}
           onChange={(event) => onChange('regionId', event.target.value)}>
           <option value="">광역 지역 선택</option>
           {regions.map((region) => <option key={region.id} value={region.id}>{region.name}</option>)}
         </select>
+        <p id="region-point-help" className="region-point-help">승인된 소식은 선택한 지역에 온기 {STORY_WARMTH_POINTS}P를 더해요.</p>
         <label htmlFor="story-body">본문</label>
         <textarea id="story-body" required maxLength={1000} rows={7} value={draft.body}
           aria-describedby="story-guidance" placeholder="이야기 내용"

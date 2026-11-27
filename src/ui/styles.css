@@ -12,6 +12,9 @@
   --shadow: rgb(29 24 54 / .09);
   --glass-edge: rgb(84 74 114 / .16);
   --glass-fallback: #fcfbfe;
+  --glass-content: rgb(255 255 255 / .88);
+  --glass-chrome: rgb(250 251 255 / .65);
+  --glass-dialog: rgb(253 253 255 / .96);
   --brand: #ffe051;
   --action: #17151c;
   --tint-yellow: #fff2b8;
@@ -421,6 +424,7 @@ span.heart { pointer-events: none; }
 .composer fieldset { display: grid; min-width: 0; margin: 0; padding: 0; border: 0; }
 .composer label { font-weight: 750; margin-block-end: 5px; }
 .composer select, .composer input { margin-block-end: 15px; }
+.composer .region-point-help { margin: -10px 0 12px; color: var(--muted); font-size: .8125rem; }
 input, select, textarea {
   min-width: 0;
   min-height: 46px;
@@ -537,19 +541,30 @@ dialog::backdrop { background: rgb(38 34 56 / .53); }
 .message-list p { margin-block-start: 3px; padding: 10px 12px; background: var(--page); border-radius: 5px 12px 12px; white-space: pre-wrap; }
 .message-list .mine p { background: var(--accent-soft); border-radius: 12px 5px 12px 12px; }
 .message-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-block-start: 12px; }
+.thread-limit { padding-block: 8px; color: var(--muted); font-size: .875rem; }
 
 :is(.site-header, .app-shell .bottom-nav, .story-card, .surface, .item-row, .empty-state, .map-surface, dialog) {
   border-color: var(--glass-edge);
   background: var(--glass-fallback);
   box-shadow: inset 0 1px 0 var(--paper), 0 10px 26px -18px rgb(49 36 77 / .44);
 }
+.app-shell .bottom-nav { box-shadow: inset 0 1px 0 var(--paper), inset 0 -1px 0 rgb(255 255 255 / .62), 0 10px 30px rgb(41 35 60 / .15); }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :is(.site-header, .app-shell .bottom-nav, .story-card, .surface, .item-row, .empty-state, .map-surface, dialog) {
-    background: rgb(255 255 255 / .66);
-    -webkit-backdrop-filter: blur(18px) saturate(120%);
-    backdrop-filter: blur(18px) saturate(120%);
+  .app-shell :is(.story-card, .surface, .item-row, .empty-state, .map-surface) {
+    background: var(--glass-content);
+    -webkit-backdrop-filter: blur(12px) saturate(115%);
+    backdrop-filter: blur(12px) saturate(115%);
   }
-  :is(.site-header, .app-shell .bottom-nav, dialog) { background: rgb(251 250 255 / .89); }
+  .app-shell :is(.site-header, .bottom-nav) {
+    background: var(--glass-chrome);
+    -webkit-backdrop-filter: blur(28px) saturate(155%);
+    backdrop-filter: blur(28px) saturate(155%);
+  }
+  .app-shell :is(dialog, .story-dialog) {
+    background: var(--glass-dialog);
+    -webkit-backdrop-filter: blur(22px) saturate(125%);
+    backdrop-filter: blur(22px) saturate(125%);
+  }
 }
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
   .app-shell::before, .app-shell::after { display: none; }

@@ -1,11 +1,16 @@
 import { useRef, useState } from 'react';
-import { DEMO_AUTHOR, makeDemoState, type DemoState } from './fixtures';
+import { DEMO_AUTHOR, DEMO_MESSAGE_LIMIT, makeDemoState, type DemoState } from './fixtures';
 import { MUSIC_REASON_LIMIT, parseModerationResult, validModerationText } from './moderation';
 import type { DemoController, Draft, ModerationResult, Post } from './types';
 import { regions } from '../regions';
 
 const STORAGE_KEY = 'ongi-jido.demo.v1';
 const unavailable = { decision: 'UNAVAILABLE' } as const;
+
+function appendMissing<Entry extends { id: string }>(existing: Entry[], added: Entry[]): Entry[] {
+  const existingIds = new Set(existing.map(({ id }) => id));
+  return [...existing, ...added.filter(({ id }) => !existingIds.has(id))];
+}
 
 function loadState(): DemoState {
   const initial = makeDemoState();
@@ -16,9 +21,28 @@ function loadState(): DemoState {
     if (saved) {
       const state: DemoState = JSON.parse(saved);
       if (Array.isArray(state.posts) && Array.isArray(state.alerts) && Array.isArray(state.messages)) {
-        const examples = new Map(initial.posts.map((post) => [post.id, post.featuredComment]));
-        const posts = state.posts.map((post) => ({ ...post, featuredComment: post.featuredComment ?? examples.get(post.id) }));
-        return { ...state, posts, recommendations: Array.isArray(state.recommendations) ? state.recommendations : [] };
+        const firstStory = state.posts.find(({ id }) => id === initial.posts[0].id);
+        const storedExampleTime = Date.parse(firstStory?.createdAt ?? '');
+        const examplePosts = Number.isFinite(storedExampleTime) ? makeDemoState(storedExampleTime).posts : initial.posts;
+        const exampleComments = new Map(examplePosts.map(({ id, featuredComment }) => [id, featuredComment]));
+        const savedPosts = state.posts.map((post) => ({
+          ...post,
+          featuredComment: post.featuredComment ?? exampleComments.get(post.id),
+        }));
+        const savedAlerts = new Map(state.alerts.map((alert) => [alert.id, alert]));
+        const exampleAlerts = initial.alerts.map((alert) => ({
+          ...alert,
+          read: savedAlerts.get(alert.id)?.read ?? alert.read,
+        }));
+        const savedMessages = new Map(state.messages.map((message) => [message.id, message]));
+        const exampleMessages = initial.messages.map((message) => savedMessages.get(message.id) ?? message);
+        const savedRecommendations = Array.isArray(state.recommendations) ? state.recommendations : [];
+        return {
+          posts: appendMissing(savedPosts, examplePosts),
+          alerts: appendMissing(exampleAlerts, state.alerts),
+          messages: appendMissing(exampleMessages, state.messages),
+          recommendations: appendMissing(savedRecommendations, initial.recommendations),
+        };
       }
     }
   } catch {
@@ -125,6 +149,7 @@ export function useDemo(): DemoController {
   function sendMessage(text: string) {
     if (readOnly || !text.trim()) return;
     const latest = current.current;
+    if (latest.messages.length >= DEMO_MESSAGE_LIMIT) return;
     save({ ...latest, messages: [...latest.messages, { id: newId(), text: text.trim(), mine: true }] });
   }
 

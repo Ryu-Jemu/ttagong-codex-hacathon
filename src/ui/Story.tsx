@@ -85,7 +85,7 @@ export function StoryCards({ posts, onOpen, onHeart, empty, home = false }: {
                 <img src={photo} alt="" loading="lazy" decoding="async" />
               </div>}
               <div className="home-story-copy">
-                <p className="home-story-byline">{post.authorName}</p>
+                <p className="home-story-byline">{storyRegion(post)} · {post.authorName}</p>
                 {title}
                 <div className="home-story-interactions">
                   {post.featuredComment && <p className="home-story-comment">
