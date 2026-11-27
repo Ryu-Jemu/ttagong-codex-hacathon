@@ -31,10 +31,10 @@
   inline-size: calc(20% - 7px);
   block-size: calc(100% - 9px);
   transform: translate(-50%, -50%);
-  border: 1px solid rgb(89 79 110 / .12);
+  border: 1px solid #9b781d;
   border-radius: var(--radius-pill);
-  background: rgb(72 63 95 / .08);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .65);
+  background: var(--tint-yellow);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .78), 0 1px 4px rgb(93 69 24 / .12);
   pointer-events: none;
   content: '';
 }
@@ -63,7 +63,7 @@
 }
 
 .bottom-nav button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: -2px;
   box-shadow: none;
 }
@@ -97,7 +97,7 @@
 }
 
 .bottom-nav button[aria-current="page"] .nav-icon {
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-4px) scale(1.12);
   color: var(--action);
 }
 
