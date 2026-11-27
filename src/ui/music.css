@@ -4,6 +4,7 @@
   max-inline-size: 940px;
   margin-inline: auto;
 }
+.music-view[hidden] { display: none; }
 
 .music-heading h1 {
   font-size: clamp(2.25rem, 7vw, 4.2rem);
