@@ -1,4 +1,6 @@
 .home-overview {
+  position: relative;
+  isolation: isolate;
   min-block-size: calc(100vh - var(--header-height) - env(safe-area-inset-top));
   min-block-size: calc(100svh - var(--header-height) - env(safe-area-inset-top));
 }
@@ -105,17 +107,43 @@ html:has(.story-dialog[open]) { overflow: hidden; }
 .story-dialog h2 { font-size: clamp(1.4rem, 4.8vw, 2.3rem); }
 
 @supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
-  .story-deck .story-card {
-    background: var(--glass);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+  .home-overview::before, .home-overview::after {
+    position: absolute;
+    z-index: -1;
+    content: '';
+    pointer-events: none;
+    border-radius: 999px;
+    filter: blur(18px);
   }
-  .story-deck .story-card:nth-child(2) { background: rgb(244 216 180 / .92); }
-  .story-deck .story-card:nth-child(3) { background: rgb(235 212 191 / .92); }
+  .home-overview::before {
+    inset-block-start: clamp(110px, 25vw, 245px);
+    inset-inline-start: 10%;
+    inline-size: min(62%, 490px);
+    block-size: clamp(104px, 18vw, 160px);
+    border: 22px solid rgb(192 88 0 / .36);
+    transform: rotate(-15deg);
+  }
+  .home-overview::after {
+    inset-block-start: clamp(295px, 45vw, 450px);
+    inset-inline-end: 9%;
+    inline-size: min(54%, 410px);
+    block-size: clamp(90px, 15vw, 138px);
+    background: rgb(113 54 0 / .19);
+    transform: rotate(15deg);
+  }
+  .story-deck .story-card {
+    border-color: rgb(113 54 0 / .36);
+    background: rgb(255 252 237 / .78);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    backdrop-filter: blur(16px) saturate(120%);
+  }
+  .story-deck .story-card:nth-child(2) { background: rgb(244 216 180 / .83); }
+  .story-deck .story-card:nth-child(3) { background: rgb(235 212 191 / .82); }
   .story-dialog { background: rgb(255 252 237 / .98); }
 }
 
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  .home-overview::before, .home-overview::after { display: none; }
   .story-deck .story-card {
     border-color: var(--ink);
     background: var(--paper);
