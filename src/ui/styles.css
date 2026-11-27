@@ -311,42 +311,13 @@ span.heart { pointer-events: none; }
 }
 .map-visual { display: grid; }
 .map-info { display: grid; gap: 10px; }
-.map-grid {
-  display: grid;
-  width: min(100%, 350px);
-  justify-self: center;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(6, minmax(46px, auto));
-  gap: clamp(6px, 2vw, 9px);
-}
-.map-tile {
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  min-width: 0;
-  min-height: 48px;
-  aspect-ratio: 1;
-  gap: 1px;
-  padding: 3px 1px;
-  border: 1px solid var(--warmth-edge);
-  border-radius: var(--radius-field);
-  background: var(--warmth-fill);
-  color: var(--ink);
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-}
-.map-tile strong { font-size: .875rem; letter-spacing: -.045em; }
-.map-tile span { font-size: .73rem; font-weight: 650; }
-.map-tile:focus-visible { z-index: 1; }
-.map-tile[data-followed="true"] {
-  border: 2px solid var(--accent);
-  box-shadow: inset 0 0 0 1px var(--paper);
-}
 
 .boundary-map, .boundary-placeholder { width: min(100%, 460px); justify-self: center; }
 .boundary-placeholder {
   display: grid;
-  place-items: center;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
   aspect-ratio: 970 / 1050;
   padding: 16px;
   text-align: center;
@@ -593,11 +564,10 @@ dialog::backdrop { background: rgb(38 34 56 / .53); }
 @media (prefers-reduced-motion: no-preference) {
   .app-shell:not([data-motion="reduced"])::before { animation: drift-upper-glow 16s ease-in-out infinite alternate; }
   .app-shell:not([data-motion="reduced"])::after { animation: drift-lower-glow 21s ease-in-out infinite alternate; }
-  .app-shell:not([data-motion="reduced"]) :is(.story-card, .map-tile, .item-row) { transition: transform 160ms ease; }
-  .app-shell:not([data-motion="reduced"]) :is(.story-card:has(.story-link:active), .map-tile:active, button.item-row:active) {
+  .app-shell:not([data-motion="reduced"]) :is(.story-card, .item-row) { transition: transform 160ms ease; }
+  .app-shell:not([data-motion="reduced"]) :is(.story-card:has(.story-link:active), button.item-row:active) {
     transform: scale(.978);
   }
-  .app-shell:not([data-motion="reduced"]) .map-tile[data-updated="true"] { animation: map-highlight 650ms ease-out; }
   .app-shell:not([data-motion="reduced"]) .boundary-area[data-updated="true"] .boundary-outline { animation: boundary-highlight 650ms ease-out; }
   .app-shell:not([data-motion="reduced"]) .review-message { animation: reveal-status 180ms ease-out; }
 }
@@ -609,10 +579,6 @@ dialog::backdrop { background: rgb(38 34 56 / .53); }
   from { transform: translate3d(22px, 15px, 0) rotate(6deg) scale(1.01); }
   to { transform: translate3d(21vw, -12vh, 0) rotate(12deg) scale(.86); }
 }
-@keyframes map-highlight {
-  from { box-shadow: 0 0 0 3px var(--ink); }
-  to { box-shadow: 0 0 0 0 transparent; }
-}
 @keyframes boundary-highlight { from { stroke: var(--accent); stroke-width: 4; } }
 @keyframes reveal-status {
   from { opacity: .78; transform: translateY(3px); }
@@ -620,8 +586,6 @@ dialog::backdrop { background: rgb(38 34 56 / .53); }
 
 @media (hover: hover) {
   .story-card:has(.story-link:hover), .item-row:hover { border-color: var(--ink); }
-  .map-tile:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
-  .map-tile:focus-visible:hover { outline-width: 3px; }
   .boundary-area:hover .boundary-outline { stroke: var(--accent); stroke-width: 2; }
   button.heart:hover { border-color: currentColor; }
   .button:not(:disabled):hover { text-decoration: underline; }
@@ -640,5 +604,4 @@ dialog::backdrop { background: rgb(38 34 56 / .53); }
 @media (max-width: 355px) {
   .header-content, .main-content { padding-inline: max(10px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-right)); }
   .map-surface { padding: 9px; }
-  .map-grid { gap: 4px; }
 }

@@ -22,7 +22,6 @@ const tabs = [
 ] as const
 
 type Tab = typeof tabs[number]['id']
-type MapView = 'boundaries' | 'grid'
 type Screen = { kind: 'tab' | 'compose' | 'thread' | 'region' } | { kind: 'alert'; id: string }
 
 const blankDraft = { title: '', body: '', regionId: '' }
@@ -62,13 +61,11 @@ function scoreBand(score: number | null) {
   return 'high'
 }
 
-function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, setView }: {
+function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId }: {
   posts: readonly Post[]
   onRegion: (id: string) => void
   updatedRegionId: string | undefined
   followedRegionId: string
-  view: MapView
-  setView: (view: MapView) => void
 }) {
   const mapSurface = useRef<HTMLDivElement>(null)
   const [Boundaries, setBoundaries] = useState<typeof import('./BoundaryMap').default>()
@@ -86,7 +83,7 @@ function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, s
   })
 
   useEffect(() => {
-    if (view === 'grid' || Boundaries || boundaryLoadFailed) return
+    if (Boundaries || boundaryLoadFailed) return
 
     let active = true
     const load = () => {
@@ -110,37 +107,21 @@ function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, s
     }, { rootMargin: '120px' })
     observer.observe(surface)
     return () => { active = false; observer.disconnect() }
-  }, [view, Boundaries, boundaryLoadFailed])
+  }, [Boundaries, boundaryLoadFailed])
 
   return (
     <section className="map-section" aria-labelledby="warmth-title">
-      <div className="section-heading section-with-control">
-        <div>
-          <h2 id="warmth-title">지역별 온기지도</h2>
-          <p className="map-unit">최근 7일 · 인구 10만 명당 포인트</p>
-        </div>
-        <div className="segmented-control map-mode" role="group" aria-label="지도 표시 방식">
-          <button type="button" aria-pressed={view === 'boundaries'} onClick={() => setView('boundaries')}>행정구역</button>
-          <button type="button" aria-pressed={view === 'grid'} onClick={() => setView('grid')}>격자</button>
-        </div>
+      <div className="section-heading">
+        <h2 id="warmth-title">지역별 온기지도</h2>
+        <p className="map-unit">최근 7일 · 인구 10만 명당 포인트</p>
       </div>
       <div className="map-surface">
         <div ref={mapSurface} className="map-visual">
-        {view === 'grid'
-          ? <div className="map-grid" role="group" aria-label="16개 광역 지역 격자 지도">
-              {entries.map((region) => (
-                <button type="button" className="map-tile" key={region.id}
-                  data-band={region.band} data-updated={region.updated} data-followed={region.followed || undefined}
-                  style={{ gridColumn: region.col, gridRow: region.row }} aria-label={region.label}
-                  onClick={() => onRegion(region.id)}>
-                  <strong>{region.shortName}</strong><span>{region.value}</span>
-                </button>
-              ))}
-            </div>
-          : Boundaries
+          {Boundaries
             ? <Boundaries entries={entries} onRegion={onRegion} />
-            : <div className="boundary-placeholder" role="status">
-                {boundaryLoadFailed ? '행정 경계를 불러오지 못했어요. 격자에서 지역을 선택할 수 있어요.' : '행정구역 지도 불러오는 중'}
+            : <div className="boundary-placeholder">
+                <p role="status">{boundaryLoadFailed ? '행정구역 지도를 불러오지 못했어요.' : '행정구역 지도 불러오는 중'}</p>
+                {boundaryLoadFailed && <button type="button" className="button button-outline" onClick={() => onRegion('')}>지역별 소식 보기</button>}
               </div>}
         </div>
         <div className="map-info">
@@ -152,7 +133,7 @@ function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, s
             <summary><Icon name="info" />온기 포인트 계산법<Icon name="down" /></summary>
             <p>오늘을 포함한 한국 시간 기준 최근 7일의 점수를 인구 10만 명당 포인트로 환산합니다. 색이 진할수록 환산 점수가 높습니다.</p>
             <p>인구 기준 · 행정안전부 주민등록 인구통계, 2026년 10월</p>
-            <p>행정 경계·격자 배치 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS</p>
+            <p>행정 경계 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS</p>
           </details>
         </div>
       </div>
@@ -169,7 +150,6 @@ export default function App() {
   const [regionPreferenceStatus, setRegionPreferenceStatus] = useState('')
   const [storyId, setStoryId] = useState<string | null>(null)
   const [sort, setSort] = useState<'recent' | 'popular'>('recent')
-  const [mapView, setMapView] = useState<MapView>('boundaries')
   const [motionReduced, setMotionReduced] = useState(loadMotionPreference)
   const [musicReset, setMusicReset] = useState(0)
   const [draft, setDraft] = useState<Draft>(blankDraft)
@@ -401,7 +381,7 @@ export default function App() {
                   empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
               </section>
             </div>
-            <RegionMap posts={demo.posts} onRegion={openRegion} followedRegionId={followedRegionId} view={mapView} setView={setMapView}
+            <RegionMap posts={demo.posts} onRegion={openRegion} followedRegionId={followedRegionId}
               updatedRegionId={review?.decision === 'APPROVED' ? review.regionId : undefined} />
           </>
         )}
