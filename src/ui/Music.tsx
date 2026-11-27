@@ -3,6 +3,8 @@ import type { FormEvent, RefObject } from 'react'
 import { MUSIC_REASON_LIMIT } from '../core/moderation'
 import type { ModerationResult, MusicRecommendation } from '../core/types'
 import { Icon } from './Icon'
+import { loadArtwork, RecordArtworkEditor, RecordDisc, saveArtwork } from './RecordArtwork'
+import type { Artwork } from './RecordArtwork'
 import './music.css'
 
 export type { MusicRecommendation } from '../core/types'
@@ -18,31 +20,36 @@ export type MusicTrack = {
   href: string
 }
 
-type CatalogTrack = MusicTrack & { note: string }
+type CatalogTrack = MusicTrack & { note: string; artwork: Artwork }
 
 export const tracks: readonly CatalogTrack[] = [
   {
     id: 'dont-worry', title: '걱정말아요 그대', artist: '이적', mood: '위로',
+    artwork: { palette: 'scarlet', mark: 'moon' },
     href: 'https://www.youtube.com/watch?v=ZskkMKYeVW8',
     note: '마음이 무거운 날, 잠깐 쉬어 가고 싶을 때 함께 듣고 싶은 곡이에요.',
   },
   {
     id: 'good-luck', title: '행운을 빌어요', artist: '페퍼톤스', mood: '응원',
+    artwork: { palette: 'gold', mark: 'sun' },
     href: 'https://www.youtube.com/watch?v=U6dTSMCqlp4',
     note: '새로운 일을 앞둔 친구에게 응원을 전하고 싶을 때 떠오르는 곡이에요.',
   },
   {
     id: 'time-of-our-life', title: '한 페이지가 될 수 있게', artist: 'DAY6', mood: '응원',
+    artwork: { palette: 'violet', mark: 'star' },
     href: 'https://www.youtube.com/watch?v=vnS_jn2uibs',
     note: '함께 준비한 일을 끝내고 서로 수고했다고 말하고 싶은 날에 잘 어울려요.',
   },
   {
     id: 'walk', title: '산책', artist: '백예린', mood: '산책',
+    artwork: { palette: 'jade', mark: 'leaf' },
     href: 'https://www.youtube.com/watch?v=T2UUTwvVoaM',
     note: '어둑해진 동네를 천천히 걸으며 하루를 정리할 때 듣기 좋아요.',
   },
   {
     id: 'you-did-well', title: '수고했어, 오늘도', artist: '옥상달빛', mood: '위로',
+    artwork: { palette: 'dusk', mark: 'heart' },
     href: 'https://www.youtube.com/watch?v=U3e4AOd-DzE',
     note: '조용히 하루를 마무리하며 오늘의 나에게 고맙다고 말해 주고 싶을 때 추천해요.',
   },
@@ -80,9 +87,13 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
   const [draftTrack, setDraftTrack] = useState<MusicTrack | null>(null)
   const [reason, setReason] = useState('')
   const [review, setReview] = useState<Review | null>(null)
+  const [artwork, setArtwork] = useState(loadArtwork)
+  const [editing, setEditing] = useState<CatalogTrack | null>(null)
+  const [artworkStatus, setArtworkStatus] = useState('')
   const searchInput = useRef<HTMLInputElement>(null)
   const reasonInput = useRef<HTMLTextAreaElement>(null)
   const composerOpener = useRef<HTMLButtonElement>(null)
+  const artworkOpener = useRef<HTMLButtonElement>(null)
   const submitting = useRef(false)
   const pending = review?.decision === 'PENDING'
   const retry = review?.decision === 'BLOCKED' || review?.decision === 'HOLD' || review?.decision === 'UNAVAILABLE'
@@ -146,6 +157,17 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
         <h1 id="music-title" ref={active ? heading : undefined} tabIndex={-1}>노래 추천</h1>
       </div>
 
+      {editing && <RecordArtworkEditor title={editing.title} artwork={artwork[editing.id] ?? editing.artwork}
+        defaultArtwork={editing.artwork} onSave={(next) => {
+          const designs = { ...artwork, [editing.id]: next }
+          setArtwork(designs)
+          setArtworkStatus(saveArtwork(designs) ? `${editing.title} LP 디자인 저장 완료` : '이번 방문에만 LP 디자인이 적용됩니다.')
+        }} onClose={() => {
+          setEditing(null)
+          artworkOpener.current?.focus()
+        }} />}
+      <p className="visually-hidden" role="status">{artworkStatus}</p>
+
       <div className="music-tools">
         <div className="music-search">
           <label className="visually-hidden" htmlFor="music-search">곡명 또는 가수 검색</label>
@@ -167,7 +189,7 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
             <Icon name="info" />
             <span>곡명과 추천 이유는 심사를 위해 Codex로 전달됩니다. 승인된 글은 이 브라우저에 저장됩니다.</span>
           </p>
-          <label htmlFor="music-reason">추천 이유</label>
+          <label htmlFor="music-reason">어떤 순간에 듣기 좋은가요?</label>
           <textarea id="music-reason" ref={reasonInput} value={reason} rows={4} required maxLength={MUSIC_REASON_LIMIT}
             aria-describedby="music-privacy" disabled={pending}
             onChange={(event) => {
@@ -199,9 +221,9 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
         <ul className="music-list">
           {visibleTracks.map((track) => (
             <li key={track.id}>
-              <article className="music-card" data-mood={track.mood}>
+              <article className="surface music-card">
                 <div className="music-card-heading">
-                  <span className="music-record" aria-hidden="true"><span /></span>
+                  <RecordDisc artwork={artwork[track.id] ?? track.artwork} />
                   <div className="music-track-info">
                     <p className="music-track-mood">{track.mood}</p>
                     <h2>{track.title}</h2>
@@ -225,6 +247,12 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
                     aria-label={`YouTube에서 듣기 · ${track.title} · 새 탭`}>
                     YouTube에서 듣기<Icon name="next" />
                   </a>
+                  <button type="button" className="button button-outline" aria-haspopup="dialog"
+                    aria-label={`${track.title} LP 꾸미기`} onClick={(event) => {
+                      artworkOpener.current = event.currentTarget
+                      setArtworkStatus('')
+                      setEditing(track)
+                    }}>LP 꾸미기</button>
                   {!readOnly && <button type="button" className="button button-outline"
                     disabled={pending || (Boolean(reason.trim()) && draftTrack?.id !== track.id)}
                     aria-expanded={draftTrack?.id === track.id}
@@ -236,7 +264,14 @@ export default function Music({ heading, active, readOnly, recommendations, onRe
           ))}
         </ul>
       ) : (
-        <p className="empty-state music-empty">검색 조건과 일치하는 추천 곡이 없습니다.</p>
+        <div className="empty-state music-empty">
+          <p>검색 조건과 일치하는 추천 곡이 없습니다.</p>
+          <button type="button" className="button button-outline" onClick={() => {
+            setSearch('')
+            setMood('전체')
+            searchInput.current?.focus()
+          }}>필터 초기화</button>
+        </div>
       )}
     </section>
   )

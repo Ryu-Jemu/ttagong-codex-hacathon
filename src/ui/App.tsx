@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { useDemo } from '../core/demo'
 import { DEMO_AUTHOR } from '../core/fixtures'
 import type { ModerationResult, Post } from '../core/types'
-import { getWarmth, regions } from '../regions'
+import { getWarmth, regions, STORY_WARMTH_POINTS } from '../regions'
 import { Composer } from './Composer'
 import type { Draft, Review } from './Composer'
 import { Icon } from './Icon'
@@ -28,8 +28,14 @@ type Screen = { kind: 'tab' | 'compose' | 'thread' | 'region' } | { kind: 'alert
 const blankDraft = { title: '', body: '', regionId: '' }
 const motionPreferenceKey = 'ttagong.settings.reduce-motion'
 const regionPreferenceKey = 'ttagong.settings.region'
-const warmthNumber = new Intl.NumberFormat('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const warmthNumber = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
 const mapRegions = [...regions].sort((a, b) => a.row - b.row || a.col - b.col)
+const mapKey = [
+  { band: 'zero', label: '0' },
+  { band: 'low', label: '0.01–0.03' },
+  { band: 'medium', label: '0.04–0.09' },
+  { band: 'high', label: '0.10 이상' },
+] as const
 
 function loadMotionPreference() {
   try {
@@ -49,10 +55,10 @@ function loadRegionPreference() {
 }
 
 function scoreBand(score: number | null) {
-  if (score === null) return 'missing'
-  const displayed = Number(score.toFixed(2))
-  if (displayed < 0.05) return 'low'
-  if (displayed < 0.1) return 'medium'
+  const hundredths = Math.round((score ?? 0) * 100)
+  if (hundredths === 0) return 'zero'
+  if (hundredths < 4) return 'low'
+  if (hundredths < 10) return 'medium'
   return 'high'
 }
 
@@ -69,13 +75,13 @@ function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, s
   const [boundaryLoadFailed, setBoundaryLoadFailed] = useState(false)
   const now = new Date()
   const entries = mapRegions.map((region) => {
-    const { score, authors } = getWarmth(posts, region, now)
-    const value = score === null ? '표본 부족' : warmthNumber.format(score)
-    const spokenScore = score === null ? `${value}, 작성자 ${authors}명` : `인구 10만 명당 ${value}건`
+    const { score, points } = getWarmth(posts, region, now)
+    const value = score === null ? '–' : warmthNumber.format(score)
     const followed = region.id === followedRegionId
+    const normalized = score === null ? '인구 보정 값 없음' : `인구 10만 명당 ${value}포인트`
     return {
       ...region, value, followed, band: scoreBand(score), updated: region.id === updatedRegionId,
-      label: `${region.name}, ${spokenScore}${followed ? ', 관심 지역으로 저장됨' : ''}, 지역 소식 보기`,
+      label: `${region.name}, 지역 온기 ${warmthNumber.format(points)}포인트, ${normalized}${followed ? ', 관심 지역으로 저장됨' : ''}, 지역 소식 보기`,
     }
   })
 
@@ -111,14 +117,15 @@ function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, s
       <div className="section-heading section-with-control">
         <div>
           <h2 id="warmth-title">지역별 온기지도</h2>
-          <p className="map-unit">최근 7일 · 인구 10만 명당</p>
+          <p className="map-unit">최근 7일 · 인구 10만 명당 포인트</p>
         </div>
         <div className="segmented-control map-mode" role="group" aria-label="지도 표시 방식">
           <button type="button" aria-pressed={view === 'boundaries'} onClick={() => setView('boundaries')}>행정구역</button>
           <button type="button" aria-pressed={view === 'grid'} onClick={() => setView('grid')}>격자</button>
         </div>
       </div>
-      <div ref={mapSurface} className="map-surface">
+      <div className="map-surface">
+        <div ref={mapSurface} className="map-visual">
         {view === 'grid'
           ? <div className="map-grid" role="group" aria-label="16개 광역 지역 격자 지도">
               {entries.map((region) => (
@@ -135,19 +142,19 @@ function RegionMap({ posts, onRegion, updatedRegionId, followedRegionId, view, s
             : <div className="boundary-placeholder" role="status">
                 {boundaryLoadFailed ? '행정 경계를 불러오지 못했어요. 격자에서 지역을 선택할 수 있어요.' : '행정구역 지도 불러오는 중'}
               </div>}
-        <details className="map-guide">
-          <summary><Icon name="info" />온기 수치 읽는 법<Icon name="down" /></summary>
-          <p>시연에 게시된 최근 7일(오늘 포함, 한국 시간)의 이야기를 인구 10만 명당 건수로 표시합니다.</p>
-          <p>같은 지역·작성자의 글은 하루 한 건으로 셉니다. 작성자가 3명 미만이면 표본 부족입니다.</p>
-          <ul className="map-key" aria-label="온기 수치 범례">
-            <li><i aria-hidden="true" data-band="low" />0.05 미만</li>
-            <li><i aria-hidden="true" data-band="medium" />0.05 이상 0.10 미만</li>
-            <li><i aria-hidden="true" data-band="high" />0.10 이상</li>
-            <li><i aria-hidden="true" />표본 부족</li>
+        </div>
+        <div className="map-info">
+          <ul className="map-key" aria-label="인구 10만 명당 온기 포인트 범례">
+            {mapKey.map(({ band, label }) => <li key={band} data-band={band}><i aria-hidden="true" />{label}</li>)}
           </ul>
-          <p>인구 기준 · 행정안전부 주민등록 인구통계, 2026년 10월</p>
-          <p>행정 경계·격자 배치 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS</p>
-        </details>
+          <p className="map-point-rule">소식 한 편마다 해당 지역에 {STORY_WARMTH_POINTS}P</p>
+          <details className="map-guide">
+            <summary><Icon name="info" />온기 포인트 계산법<Icon name="down" /></summary>
+            <p>오늘을 포함한 한국 시간 기준 최근 7일의 점수를 인구 10만 명당 포인트로 환산합니다. 색이 진할수록 환산 점수가 높습니다.</p>
+            <p>인구 기준 · 행정안전부 주민등록 인구통계, 2026년 10월</p>
+            <p>행정 경계·격자 배치 · <a href="https://github.com/worlyung/krmap">krmap</a> · 통계청 SGIS</p>
+          </details>
+        </div>
       </div>
     </section>
   )
@@ -418,9 +425,8 @@ export default function App() {
             </div>
             <p className="region-preference-status" role="status">{regionPreferenceStatus}</p>
             {regionWarmth && <p className="region-stats">
-              최근 7일 집계 {regionWarmth.count}건 · 작성자 {regionWarmth.authors}명 · {regionWarmth.score === null
-                ? '표본 부족'
-                : `인구 10만 명당 ${warmthNumber.format(regionWarmth.score)}건`}
+              <span>최근 7일 온기 <strong>{warmthNumber.format(regionWarmth.points)}P</strong></span>
+              {regionWarmth.score !== null && <span>인구 10만 명당 {warmthNumber.format(regionWarmth.score)}P</span>}
             </p>}
             <section className="region-feed" aria-labelledby="region-feed-title">
               <div className="section-heading">

@@ -1,4 +1,5 @@
 import { krmapTiles } from './krmap-tiles.ts';
+import type { Post } from '../core/types.ts';
 
 export type Region = {
   id: string;
@@ -34,11 +35,7 @@ export const regions: readonly Region[] = residentPopulations.map((region) => ({
   ...krmapTiles[region.name],
 }));
 
-type PublicPost = {
-  authorId: string;
-  regionId: string;
-  createdAt: string;
-};
+export const STORY_WARMTH_POINTS = 1;
 
 const hourMs = 60 * 60 * 1_000;
 const dayMs = 24 * hourMs;
@@ -58,17 +55,16 @@ function parseTimestamp(value: string): number {
 
 /** Callers pass published posts after moderation has approved them. */
 export function getWarmth(
-  posts: readonly PublicPost[],
+  posts: readonly Pick<Post, 'id' | 'regionId' | 'createdAt'>[],
   region: Region,
   now = new Date(),
-): { score: number | null; count: number; authors: number } {
+): { points: number; score: number | null } {
   const nowMs = now.getTime();
-  if (!Number.isFinite(nowMs)) return { score: null, count: 0, authors: 0 };
+  if (!Number.isFinite(nowMs)) return { points: 0, score: null };
 
   const todayKst = Math.floor((nowMs + kstOffsetMs) / dayMs);
   const firstDayKst = todayKst - 6;
-  const daysByAuthor = new Map<string, Set<number>>();
-  let count = 0;
+  const postIds = new Set<string>();
 
   for (const post of posts) {
     if (post.regionId !== region.id) continue;
@@ -77,21 +73,11 @@ export function getWarmth(
     if (!Number.isFinite(time) || time > nowMs) continue;
 
     const dayKst = Math.floor((time + kstOffsetMs) / dayMs);
-    if (dayKst < firstDayKst) continue;
-
-    let days = daysByAuthor.get(post.authorId);
-    if (!days) {
-      days = new Set<number>();
-      daysByAuthor.set(post.authorId, days);
-    }
-
-    if (!days.has(dayKst)) {
-      days.add(dayKst);
-      count++;
-    }
+    if (dayKst >= firstDayKst) postIds.add(post.id);
   }
 
-  const authors = daysByAuthor.size;
-  const hasSample = authors >= 3 && Number.isFinite(region.population) && region.population > 0;
-  return { score: hasSample ? (100_000 * count) / region.population : null, count, authors };
+  const points = STORY_WARMTH_POINTS * postIds.size;
+  const score = Number.isFinite(region.population) && region.population > 0
+    ? (100_000 * points) / region.population : null;
+  return { points, score };
 }

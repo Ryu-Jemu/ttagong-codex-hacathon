@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { DEMO_AUTHOR, makeDemoState, type DemoState } from './fixtures';
 import { MUSIC_REASON_LIMIT, parseModerationResult, validModerationText } from './moderation';
 import type { DemoController, Draft, ModerationResult, Post } from './types';
+import { regions } from '../regions';
 
 const STORAGE_KEY = 'ongi-jido.demo.v1';
 const unavailable = { decision: 'UNAVAILABLE' } as const;
@@ -78,7 +79,7 @@ export function useDemo(): DemoController {
   }
 
   async function publish({ title, body, regionId }: Draft): Promise<ModerationResult> {
-    if (!/^\d{10}$/.test(regionId)) return unavailable;
+    if (!regions.some(({ id }) => id === regionId)) return unavailable;
 
     return reviewAndSave(title, body, () => {
       const post: Post = { ...DEMO_AUTHOR, id: newId(), title, body, regionId, createdAt: new Date().toISOString(), hearts: 0 };

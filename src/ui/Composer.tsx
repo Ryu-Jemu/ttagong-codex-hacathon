@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import type { ModerationResult } from '../core/types'
-import { regions } from '../regions'
+import { regions, STORY_WARMTH_POINTS } from '../regions'
 import { Icon } from './Icon'
 
 export type Draft = { title: string; body: string; regionId: string }
@@ -32,6 +32,8 @@ export function Composer({ draft, review, onChange, onSubmit, onRegion }: {
   const reason = review?.decision === 'BLOCKED' && review.reasonCode
   const guidance = reason && reason in reasonText ? reasonText[reason as keyof typeof reasonText] : undefined
   const retry = review?.decision === 'UNAVAILABLE' || review?.decision === 'HOLD' || review?.decision === 'BLOCKED'
+  const publishedRegion = review?.decision === 'APPROVED' && regions.find(({ id }) => id === review.regionId)
+  const detail = publishedRegion ? `${publishedRegion.shortName} 온기 +${STORY_WARMTH_POINTS}P` : guidance || result?.[1]
 
   return (
     <form className="surface composer" onSubmit={onSubmit}>
@@ -65,7 +67,7 @@ export function Composer({ draft, review, onChange, onSubmit, onRegion }: {
           <Icon name={review.decision === 'APPROVED' ? 'check' : 'info'} />
           <div>
             <strong>{result[0]}</strong>
-            {(guidance || result[1]) && <p>{guidance || result[1]}</p>}
+            {detail && <p>{detail}</p>}
           </div>
         </div>}
       </div>

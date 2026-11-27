@@ -13,8 +13,8 @@ const region: Region = {
 };
 const now = new Date("2026-11-26T15:30:00.000Z");
 
-function post(authorId: string, createdAt = now.toISOString(), regionId = region.id) {
-  return { authorId, regionId, createdAt };
+function post(id: string, createdAt = now.toISOString(), regionId = region.id, authorId = 'same-author') {
+  return { id, regionId, createdAt, authorId };
 }
 
 test("regions match the current 16-province grid and national population total", () => {
@@ -33,22 +33,23 @@ test("regions match the current 16-province grid and national population total",
   assert.equal(regions.reduce((sum, entry) => sum + entry.population, 0), 51_075_282);
 });
 
-test("uses seven KST calendar dates and counts each author once per date in the region", () => {
+test("uses seven KST calendar dates and awards one point per distinct story in the region", () => {
   const posts = [
     post("too-old", "2026-11-20T14:59:59.999Z"),
     post("a", "2026-11-20T15:00:00.000Z"),
-    post("a", "2026-11-21T10:00:00+09:00"),
-    post("a", "2026-11-21T15:00:00.000Z"),
-    post("b", "2026-11-26T14:59:59.999Z"),
-    post("b", "2026-11-26T15:00:00.000Z"),
-    post("c"),
+    post("b", "2026-11-21T10:00:00+09:00"),
+    post("c", "2026-11-21T15:00:00.000Z"),
+    post("d", "2026-11-26T14:59:59.999Z"),
+    post("e", "2026-11-26T15:00:00.000Z"),
+    post("f"),
+    post("f"),
     post("future", "2026-11-26T15:30:00.001Z"),
     post("other-region", now.toISOString(), "2600000000"),
   ];
-  assert.deepEqual(getWarmth(posts, region, now), { score: 5, count: 5, authors: 3 });
+  assert.deepEqual(getWarmth(posts, region, now), { points: 6, score: 6 });
   assert.deepEqual(
     getWarmth(posts, region, new Date("2026-11-26T14:59:59.999Z")),
-    { score: 4, count: 4, authors: 3 },
+    { points: 5, score: 5 },
   );
 });
 
@@ -66,30 +67,22 @@ test("excludes invalid dates, including rollover and local timestamps without an
       region,
       march,
     ),
-    { score: null, count: 1, authors: 1 },
+    { points: 1, score: 1 },
   );
 });
 
-test("requires three distinct authors and scales inversely with a positive population", () => {
-  const posts = [post("a"), post("b"), post("a", "2026-11-25T15:00:00Z")];
-  assert.deepEqual(getWarmth(posts, region, now), { score: null, count: 3, authors: 2 });
-
-  posts.push(post("c"));
-  const small = getWarmth(posts, region, now);
-  const large = getWarmth(posts, { ...region, population: 1_000_000 }, now);
-  assert.deepEqual(small, { score: 4, count: 4, authors: 3 });
-  assert.deepEqual(large, { score: 0.4, count: 4, authors: 3 });
-  assert.deepEqual(getWarmth(posts, { ...region, population: 0 }, now), {
-    score: null,
-    count: 4,
-    authors: 3,
-  });
+test("shows zero and the first point, and normalizes for different populations", () => {
+  const posts = [post("first")];
+  assert.deepEqual(getWarmth([], region, now), { points: 0, score: 0 });
+  assert.deepEqual(getWarmth(posts, region, now), { points: 1, score: 1 });
+  assert.deepEqual(getWarmth(posts, { ...region, population: 1_000_000 }, now), { points: 1, score: 0.1 });
+  assert.deepEqual(getWarmth(posts, { ...region, population: 0 }, now), { points: 1, score: null });
 });
 
-test("the published-post input changes only when a fourth demo author is published", () => {
+test("only a newly published story changes the region's points", () => {
   const published = [post("seed-1"), post("seed-2"), post("seed-3")];
   const candidate = post("demo-author");
 
-  assert.deepEqual(getWarmth(published, region, now), { score: 3, count: 3, authors: 3 });
-  assert.deepEqual(getWarmth([...published, candidate], region, now), { score: 4, count: 4, authors: 4 });
+  assert.deepEqual(getWarmth(published, region, now), { points: 3, score: 3 });
+  assert.deepEqual(getWarmth([...published, candidate], region, now), { points: 4, score: 4 });
 });

@@ -68,11 +68,10 @@ export default function BoundaryMap({ entries, onRegion }: {
               onClick={() => onRegion(entry.id)}>
               {offset && <line className="boundary-leader" x1={originX} y1={originY - 8}
                 x2={x} y2={y - 8} vectorEffect="non-scaling-stroke" />}
-              <rect className="boundary-hit" x={x - 34} y={y - 27} width={68}
-                height={entry.band === 'missing' ? 36 : 57} />
+              <rect className="boundary-hit" x={x - 34} y={y - 27} width={68} height={entry.band === 'zero' ? 36 : 57} />
               <text className="boundary-label" x={x} y={y} textAnchor="middle">
                 <tspan>{entry.shortName}</tspan>
-                <tspan className="boundary-value" x={x} dy="1.15em">{entry.band === 'missing' ? '–' : entry.value}</tspan>
+                {entry.band !== 'zero' && <tspan className="boundary-value" x={x} dy="1.1em">{entry.value}</tspan>}
               </text>
             </g>
           ))}

@@ -69,10 +69,7 @@
   min-block-size: 78px;
   padding: 8px 10px 8px 13px;
   border-radius: var(--radius-feature);
-  background: var(--tint-yellow);
 }
-.home-story-list .story-card:nth-child(2) { background: var(--tint-rose); }
-.home-story-list .story-card:nth-child(3) { background: var(--tint-mint); }
 
 .home-story-media {
   grid-column: 2;
