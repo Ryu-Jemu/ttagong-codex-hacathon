@@ -17,18 +17,14 @@
   color: var(--ink);
   background: var(--page);
   scroll-padding-block: calc(var(--header-height) + env(safe-area-inset-top) + 12px)
-    calc(var(--nav-height) + env(safe-area-inset-bottom) + 24px);
+    calc(var(--nav-height) + env(safe-area-inset-bottom) + 3.5rem);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
   min-inline-size: 0;
-  background:
-    radial-gradient(ellipse at 83% 6%, var(--blue) 0, transparent 57%),
-    radial-gradient(ellipse at 13% 40%, var(--butter) 0, transparent 63%) var(--page);
-  background-size: 100% 600px;
-  background-repeat: no-repeat;
+  background: var(--page);
 }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -109,7 +105,7 @@ img { display: block; max-inline-size: 100%; }
   border: 1px solid #b1c7d3;
   border-radius: 11px;
   color: var(--ink);
-  background: linear-gradient(140deg, var(--blue), var(--blue-light));
+  background: var(--blue);
   font-size: 1.12rem;
   box-shadow: inset 0 1px 0 #fff;
 }
@@ -126,7 +122,7 @@ img { display: block; max-inline-size: 100%; }
 }
 .main-content {
   min-height: calc(100vh - var(--header-height));
-  padding-block: 22px calc(var(--nav-height) + env(safe-area-inset-bottom) + 42px);
+  padding-block: 22px calc(var(--nav-height) + env(safe-area-inset-bottom) + 3.5rem);
 }
 .button {
   display: inline-flex;
@@ -326,9 +322,7 @@ span.heart { pointer-events: none; }
   padding: 28px;
   border: 1px solid var(--line);
   border-radius: 19px;
-  background-color: var(--blue-light);
-  background-image: radial-gradient(#a8c0d1 .7px, transparent .7px);
-  background-size: 12px 12px;
+  background: var(--blue-light);
 }
 .map-grid {
   display: grid;
@@ -580,7 +574,7 @@ dialog::backdrop { background: rgba(67, 47, 46, .6); }
     backdrop-filter: blur(16px) saturate(115%);
   }
   .hero {
-    background: linear-gradient(125deg, rgba(196, 218, 232, .84), rgba(254, 239, 184, .77));
+    background: rgba(196, 218, 232, .82);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
