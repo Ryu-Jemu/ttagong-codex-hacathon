@@ -42,15 +42,20 @@ export default function Profile({
         <h1 id="profile-title" ref={heading} tabIndex={-1}>프로필</h1>
         <div className="surface profile-hero">
           <div className="profile-identity">
-            <span className="profile-avatar"><Icon name="profile" /></span>
+            <img className="profile-avatar" src="/ttagong-mark.svg" alt=""
+              width={1254} height={1254} loading="lazy" decoding="async" />
             <div>
               <p className="profile-caption">시연 프로필</p>
               <h2>{displayName}</h2>
+              <p className="profile-bio">동네에서 마주친 작은 친절을 기록해요.</p>
             </div>
           </div>
           <dl className="profile-stats" aria-label="시연 활동">
             <div><dt>내 이야기</dt><dd>{activityNumber.format(posts.length)}</dd></div>
-            <div><dt>받은 좋아요</dt><dd>{activityNumber.format(hearts)}</dd></div>
+            <div>
+              <dt className="profile-likes-label"><Icon name="heart" filled /><span>받은 좋아요</span></dt>
+              <dd>{activityNumber.format(hearts)}</dd>
+            </div>
             <div><dt>노래 추천</dt><dd>{activityNumber.format(recommendations.length)}</dd></div>
           </dl>
         </div>
