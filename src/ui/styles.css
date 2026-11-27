@@ -288,10 +288,11 @@ span.heart { pointer-events: none; }
 .empty-state { padding: 24px 18px; color: var(--muted); }
 
 .map-section {
-  --warmth-zero: hsl(22 79% 97%);
-  --warmth-low: hsl(22 79% 89%);
-  --warmth-medium: hsl(22 79% 74%);
-  --warmth-high: hsl(22 79% 40%);
+  --warmth-zero: hsl(48 91% 97%);
+  --warmth-low: hsl(48 91% 88%);
+  --warmth-medium: hsl(48 91% 72%);
+  --warmth-high: hsl(48 91% 51%);
+  --warmth-edge: #706044;
 }
 .map-section [data-band="zero"] { --warmth-fill: var(--warmth-zero); }
 .map-section [data-band="low"] { --warmth-fill: var(--warmth-low); }
@@ -327,14 +328,13 @@ span.heart { pointer-events: none; }
   aspect-ratio: 1;
   gap: 1px;
   padding: 3px 1px;
-  border: 1px solid var(--control-line);
+  border: 1px solid var(--warmth-edge);
   border-radius: var(--radius-field);
   background: var(--warmth-fill);
   color: var(--ink);
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
-.map-tile[data-band="high"] { color: var(--paper); }
 .map-tile strong { font-size: .875rem; letter-spacing: -.045em; }
 .map-tile span { font-size: .73rem; font-weight: 650; }
 .map-tile:focus-visible { z-index: 1; }
@@ -357,12 +357,12 @@ span.heart { pointer-events: none; }
 .boundary-chooser select { flex: 1 1 180px; }
 .boundary-area { cursor: pointer; }
 .boundary-area:focus-visible { outline: none; box-shadow: none; }
-.boundary-outline { fill: var(--warmth-fill); stroke: var(--control-line); stroke-width: 1; }
+.boundary-outline { fill: var(--warmth-fill); stroke: var(--warmth-edge); stroke-width: 1; }
 .boundary-area:is([data-followed="true"], [data-picked="true"]) .boundary-outline { stroke: var(--accent); stroke-width: 2; }
 .boundary-area:is(:focus-visible, :active) .boundary-outline { stroke: var(--accent); stroke-width: 3; }
 .boundary-area[data-band="high"]:is(:focus-visible, :active, [data-followed="true"], [data-picked="true"]) .boundary-outline {
-  stroke: var(--paper);
-  filter: drop-shadow(0 0 1px var(--ink));
+  stroke: var(--ink);
+  filter: drop-shadow(0 0 1px var(--paper));
 }
 .boundary-label {
   fill: var(--ink);
@@ -376,7 +376,6 @@ span.heart { pointer-events: none; }
 .boundary-value { font-size: 30px; }
 .boundary-leader { stroke: var(--control-line); stroke-width: 1; }
 .boundary-hit { fill: transparent; pointer-events: all; }
-.boundary-area[data-band="high"] .boundary-label { fill: var(--paper); stroke: var(--ink); stroke-width: 4px; }
 .map-guide {
   padding: 0 14px;
   border: 1px solid var(--line);
@@ -400,7 +399,7 @@ span.heart { pointer-events: none; }
 .map-guide p { margin-block-start: 7px; font-size: .875rem; color: var(--muted); }
 .map-key { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0; list-style: none; font-size: .75rem; }
 .map-key li { display: grid; gap: 4px; text-align: center; }
-.map-key i { height: 12px; border: 1px solid var(--control-line); border-radius: 4px; background: var(--warmth-fill); }
+.map-key i { height: 12px; border: 1px solid var(--warmth-edge); border-radius: 4px; background: var(--warmth-fill); }
 .map-point-rule { color: var(--muted); font-size: .875rem; }
 
 .page-heading { margin-block-end: 19px; }
