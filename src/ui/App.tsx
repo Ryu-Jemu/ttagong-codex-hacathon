@@ -212,7 +212,7 @@ export default function App() {
               <div className="hero-copy">
                 <h1 id="hero-title" ref={heading} tabIndex={-1}>이웃의 온기를 <br />지도에 담아요</h1>
                 <p>도움을 주고받고, 함께 일어선 순간들.<br className="desktop-break" /> 우리 동네의 따뜻한 이야기를 만나 보세요.</p>
-                <button type="button" className="button button-gold" onClick={jumpToMap}>
+                <button type="button" className="button button-accent" onClick={jumpToMap}>
                   지역 지도 보기<Icon name="down" />
                 </button>
               </div>
