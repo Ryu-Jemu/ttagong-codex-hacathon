@@ -9,6 +9,7 @@ import type { Draft, Review } from './Composer'
 import { Icon } from './Icon'
 import { Heart, newestFirst, popularStories, StoryCards, StoryDate, storyRegion } from './Story'
 import './styles.css'
+import './deck.css'
 
 const tabs = [
   { id: 'home', label: '홈', icon: 'home' },
@@ -19,7 +20,7 @@ const tabs = [
 ] as const
 
 type Tab = typeof tabs[number]['id']
-type Screen = { kind: 'tab' | 'compose' | 'thread' } | { kind: 'post' | 'alert'; id: string }
+type Screen = { kind: 'tab' | 'compose' | 'thread' } | { kind: 'alert'; id: string }
 
 const blankDraft = { title: '', body: '', regionId: '' }
 const warmthNumber = new Intl.NumberFormat('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -85,6 +86,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('home')
   const [screen, setScreen] = useState<Screen>({ kind: 'tab' })
   const [regionId, setRegionId] = useState('')
+  const [storyId, setStoryId] = useState<string | null>(null)
   const [sort, setSort] = useState<'recent' | 'popular'>('recent')
   const [draft, setDraft] = useState<Draft>(blankDraft)
   const [review, setReview] = useState<Review | null>(null)
@@ -93,8 +95,11 @@ export default function App() {
   const publishing = useRef(false)
   const heading = useRef<HTMLHeadingElement>(null)
   const resetDialog = useRef<HTMLDialogElement>(null)
+  const storyDialog = useRef<HTMLDialogElement>(null)
+  const storyClose = useRef<HTMLButtonElement>(null)
+  const storyOpener = useRef<HTMLButtonElement>(null)
   const previousPage = useRef('')
-  const page = tab + screen.kind + (screen.kind === 'post' || screen.kind === 'alert' ? screen.id : '')
+  const page = tab + screen.kind + (screen.kind === 'alert' ? screen.id : '')
 
   useEffect(() => {
     if (previousPage.current && previousPage.current !== page) {
@@ -104,11 +109,19 @@ export default function App() {
     previousPage.current = page
   }, [page])
 
+  useEffect(() => {
+    const dialog = storyDialog.current
+    if (storyId && dialog && !dialog.open) {
+      dialog.showModal()
+      storyClose.current?.focus({ preventScroll: true })
+    }
+  }, [storyId])
+
   const region = regions.find((item) => item.id === regionId)
   const regionWarmth = region && getWarmth(demo.posts, region)
   const latest = [...demo.posts].sort(newestFirst)
   const homePosts = (sort === 'recent' ? latest : popularStories(demo.posts)).slice(0, 3)
-  const selectedPost = screen.kind === 'post' ? demo.posts.find((post) => post.id === screen.id) : undefined
+  const selectedPost = storyId ? demo.posts.find((post) => post.id === storyId) : undefined
   const selectedAlert = screen.kind === 'alert' ? demo.alerts.find((alert) => alert.id === screen.id) : undefined
   const unread = demo.alerts.filter((alert) => !alert.read).length
 
@@ -177,8 +190,19 @@ export default function App() {
     mapTitle?.scrollIntoView({ block: 'start' })
   }
 
+  function returnToStoryList() {
+    setStoryId(null)
+    const opener = storyOpener.current
+    const target = opener?.isConnected ? opener : heading.current
+    target?.focus({ preventScroll: true })
+    storyOpener.current = null
+  }
+
   const storyActions = {
-    onOpen: (post: Post) => setScreen({ kind: 'post', id: post.id }),
+    onOpen: (post: Post, opener: HTMLButtonElement) => {
+      storyOpener.current = opener
+      setStoryId(post.id)
+    },
     onHeart: demo.readOnly ? undefined : demo.toggleHeart,
   }
 
@@ -208,32 +232,33 @@ export default function App() {
       <main id="main-content" className="main-content" tabIndex={-1}>
         {screen.kind === 'tab' && tab === 'home' && (
           <>
-            <section className="hero" aria-labelledby="hero-title">
-              <div className="hero-copy">
-                <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
-                <button type="button" className="button button-accent" onClick={jumpToMap}>
-                  지역 지도 보기<Icon name="down" />
-                </button>
-              </div>
-              <figure className="hero-picture">
-                <img src="/neighborhood-books.jpg" width="1120" height="746" fetchPriority="high"
-                  alt="비 온 뒤 동네 책방 앞에서 함께 책을 정리하는 이웃" />
-                <figcaption>시연용 생성 이미지</figcaption>
-              </figure>
-            </section>
-
-            <section className="home-stories" aria-labelledby="stories-title">
-              <div className="section-heading section-with-control">
-                <h2 id="stories-title">이웃의 이야기</h2>
-                <div className="segmented-control" role="group" aria-label="이야기 정렬">
-                  <button type="button" aria-pressed={sort === 'recent'} onClick={() => setSort('recent')}>최신</button>
-                  <button type="button" aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>인기</button>
+            <div className="home-overview">
+              <section className="hero" aria-labelledby="hero-title">
+                <div className="hero-copy">
+                  <h1 id="hero-title" ref={heading} tabIndex={-1}>따뜻한 소식 공유</h1>
+                  <button type="button" className="button button-accent" onClick={jumpToMap}>
+                    지역 지도 보기<Icon name="down" />
+                  </button>
                 </div>
-              </div>
-              <StoryCards posts={homePosts} {...storyActions}
-                empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
-            </section>
+                <figure className="hero-picture">
+                  <img src="/neighborhood-books.jpg" width="1120" height="746" fetchPriority="high"
+                    alt="비 온 뒤 동네 책방 앞에서 함께 책을 정리하는 이웃" />
+                  <figcaption>시연용 생성 이미지</figcaption>
+                </figure>
+              </section>
 
+              <section className="home-stories" aria-labelledby="stories-title">
+                <div className="section-heading section-with-control">
+                  <h2 id="stories-title">이웃의 이야기</h2>
+                  <div className="segmented-control" role="group" aria-label="이야기 정렬">
+                    <button type="button" aria-pressed={sort === 'recent'} onClick={() => setSort('recent')}>최신</button>
+                    <button type="button" aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>인기</button>
+                  </div>
+                </div>
+                <StoryCards posts={homePosts} {...storyActions} deck
+                  empty={sort === 'popular' ? '최근 7일 동안 게시된 이야기가 없습니다.' : '아직 게시된 이야기가 없습니다.'} />
+              </section>
+            </div>
             <RegionMap posts={demo.posts} onRegion={openRegion}
               updatedRegionId={review?.decision === 'APPROVED' ? review.regionId : undefined} />
           </>
@@ -263,24 +288,6 @@ export default function App() {
               <StoryCards posts={region ? latest.filter((post) => post.regionId === region.id) : latest}
                 {...storyActions} empty="이 지역에 아직 게시된 이야기가 없습니다." />
             </section>
-          </>
-        )}
-
-        {screen.kind === 'post' && (
-          <>
-            {back(tab === 'regions' ? '지역별 소식' : '이야기 목록')}
-            <article className="surface story-detail">
-              {selectedPost && <div className="story-meta">
-                <span className="region-label"><Icon name="pin" />{storyRegion(selectedPost)}</span>
-                <StoryDate post={selectedPost} />
-              </div>}
-              <h1 ref={heading} tabIndex={-1}>{selectedPost?.title ?? '이야기를 찾을 수 없습니다.'}</h1>
-              {selectedPost && <>
-                <p className="story-detail-author">{selectedPost.authorName}</p>
-                <p className="story-body">{selectedPost.body}</p>
-                <Heart post={selectedPost} onHeart={demo.readOnly ? undefined : () => demo.toggleHeart(selectedPost.id)} />
-              </>}
-            </article>
           </>
         )}
 
@@ -391,6 +398,26 @@ export default function App() {
             </section>
           </>
         )}
+
+        <dialog ref={storyDialog} className="story-dialog" aria-labelledby="story-dialog-title" onClose={returnToStoryList}>
+          {storyId && <article className="story-detail">
+            <div className="story-dialog-header">
+              {selectedPost && <div className="story-meta">
+                <span className="region-label"><Icon name="pin" />{storyRegion(selectedPost)}</span>
+                <StoryDate post={selectedPost} />
+              </div>}
+              <button type="button" ref={storyClose} className="story-close" onClick={() => storyDialog.current?.close()}>
+                <span aria-hidden="true">×</span> 닫기
+              </button>
+            </div>
+            <h2 id="story-dialog-title">{selectedPost?.title ?? '이야기를 찾을 수 없습니다.'}</h2>
+            {selectedPost && <>
+              <p className="story-detail-author">{selectedPost.authorName}</p>
+              <p className="story-body">{selectedPost.body}</p>
+              <Heart post={selectedPost} onHeart={demo.readOnly ? undefined : () => demo.toggleHeart(selectedPost.id)} />
+            </>}
+          </article>}
+        </dialog>
       </main>
 
       <nav className="bottom-nav" aria-label="주 메뉴">

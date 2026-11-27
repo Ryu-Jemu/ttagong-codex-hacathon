@@ -51,28 +51,36 @@ export function Heart({ post, onHeart }: { post: Post; onHeart?: () => void }) {
   )
 }
 
-export function StoryCards({ posts, onOpen, onHeart, empty }: {
+export function StoryCards({ posts, onOpen, onHeart, empty, deck = false }: {
   posts: readonly Post[]
-  onOpen: (post: Post) => void
+  onOpen: (post: Post, opener: HTMLButtonElement) => void
   onHeart?: (id: string) => void
   empty: string
+  deck?: boolean
 }) {
   if (!posts.length) return <p className="empty-state">{empty}</p>
 
   return (
-    <div className="story-list">
+    <div className={deck ? 'story-list story-deck' : 'story-list'}>
       {posts.map((post) => (
         <article className="story-card" key={post.id}>
-          <div className="story-meta">
-            <span className="region-label"><Icon name="pin" />{storyRegion(post)}</span>
-            <StoryDate post={post} />
-          </div>
-          <h3><button type="button" className="story-link" onClick={() => onOpen(post)}>{post.title}</button></h3>
-          <p className="story-preview">{post.body}</p>
-          <div className="story-footer">
-            <span>{post.authorName}</span>
-            <Heart post={post} onHeart={onHeart ? () => onHeart(post.id) : undefined} />
-          </div>
+          {deck
+            ? <p className="deck-byline">{post.authorName}</p>
+            : <div className="story-meta">
+                <span className="region-label"><Icon name="pin" />{storyRegion(post)}</span>
+                <StoryDate post={post} />
+              </div>}
+          <h3>
+            <button type="button" className="story-link" aria-haspopup="dialog"
+              onClick={(event) => onOpen(post, event.currentTarget)}>{post.title}</button>
+          </h3>
+          {!deck && <>
+            <p className="story-preview">{post.body}</p>
+            <div className="story-footer">
+              <span>{post.authorName}</span>
+              <Heart post={post} onHeart={onHeart ? () => onHeart(post.id) : undefined} />
+            </div>
+          </>}
         </article>
       ))}
     </div>
