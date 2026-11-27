@@ -83,6 +83,7 @@ img { display: block; max-inline-size: 100%; }
 }
 .header-content {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -196,6 +197,7 @@ img { display: block; max-inline-size: 100%; }
 
 .home-stories, .map-section { margin-block-start: 38px; }
 .section-heading { margin-block-end: 14px; }
+.map-unit { margin-block-start: 3px; color: var(--muted); font-size: .8125rem; }
 .section-heading h2 { font-size: clamp(1.55rem, 3vw, 2.05rem); }
 .section-with-control {
   display: flex;
@@ -556,7 +558,8 @@ dialog::backdrop { background: rgba(67, 47, 46, .6); }
   font-size: .8125rem;
   font-weight: 650;
   line-height: 1.25;
-  white-space: nowrap;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 .nav-icon { position: relative; font-size: 1.03rem; }
 .nav-icon i {
@@ -621,10 +624,12 @@ dialog::backdrop { background: rgba(67, 47, 46, .6); }
     padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
   }
   .main-content { padding-block-start: 13px; }
-  .hero { grid-template-columns: minmax(0, 1fr); min-height: auto; border-radius: 23px; padding: 6px; }
-  .hero-copy { padding: 12px 10px 13px; }
-  .hero h1 { margin-block-end: 9px; font-size: clamp(1.95rem, 7.5vw, 3rem); }
-  .hero-picture { min-height: 0; aspect-ratio: 3.25; border-radius: 17px; }
+  .hero { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); min-height: 150px; border-radius: 23px; padding: 6px; }
+  .hero-copy { min-width: 0; padding: 12px 9px 13px; }
+  .hero h1 { margin-block-end: 9px; font-size: clamp(1.65rem, 6.7vw, 3rem); }
+  .hero .button { padding-inline: 10px; text-align: center; }
+  .hero-picture { min-height: 100%; border-radius: 17px; }
+  .hero-picture figcaption { inset: auto 6px 6px auto; padding: 3px 6px; }
   .home-stories, .map-section { margin-block-start: 26px; }
   .story-list { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .story-card { padding: 12px 13px 5px; gap: 5px; }
@@ -637,6 +642,8 @@ dialog::backdrop { background: rgba(67, 47, 46, .6); }
   .map-surface { padding: 9px; }
   .map-grid { gap: 4px; }
   .hero-copy { padding-inline: 14px; }
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .hero-picture { min-height: 0; aspect-ratio: 3.5; }
 }
 @media (hover: none) and (pointer: coarse) and (max-width: 760px) {
   :root:has(.composer :is(input, textarea):focus, .message-form input:focus) .bottom-nav { visibility: hidden; }

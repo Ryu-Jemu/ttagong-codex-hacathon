@@ -44,6 +44,7 @@ function RegionMap({ posts, onRegion, updatedRegionId }: {
     <section className="map-section" aria-labelledby="warmth-title">
       <div className="section-heading">
         <h2 id="warmth-title" tabIndex={-1}>지역별 온기지도</h2>
+        <p className="map-unit">최근 7일 · 인구 10만 명당</p>
       </div>
       <div className="map-surface">
         <div className="map-grid" role="group" aria-label="16개 광역 지역 지도">

@@ -1,6 +1,6 @@
 import type { DemoAlert, DemoMessage, Post } from './types';
 
-export const DEMO_AUTHOR = { authorId: 'demo-you', authorName: 'daily_warming 이웃' };
+export const DEMO_AUTHOR = { authorId: 'demo-you', authorName: '따공 이웃' };
 
 export type DemoState = {
   posts: Post[];
